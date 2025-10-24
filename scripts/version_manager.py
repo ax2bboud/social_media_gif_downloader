@@ -164,6 +164,12 @@ class VersionManager:
         # Add files
         self.run_git_command(["add", "pyproject.toml", "twitter_downloader.py", "__init__.py"])
 
+        # Check for staged changes
+        status = self.run_git_command(["status", "--porcelain"])
+        if not status:
+            print(f"No changes to commit for version {new_version}. Skipping commit and tag.")
+            return
+
         # Commit
         self.run_git_command([
             "commit", "-m",
