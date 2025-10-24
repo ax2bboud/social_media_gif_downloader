@@ -1,10 +1,12 @@
 import pytest
 from twitter_downloader import App
+from tests.conftest import is_headless
 
 
 class TestURLParsing:
     """Tests for URL parsing functionality."""
 
+    @pytest.mark.skipif(is_headless(), reason="Skipping GUI test in headless environment")
     def test_get_id_from_url_valid(self):
         """Test extracting tweet ID from valid Twitter/X URLs."""
         app = App()
@@ -21,6 +23,7 @@ class TestURLParsing:
         url3 = "https://x.com/user/status/1234567890123456789?s=20"
         assert app.get_id_from_url(url3) == "1234567890123456789"
 
+    @pytest.mark.skipif(is_headless(), reason="Skipping GUI test in headless environment")
     def test_get_id_from_url_invalid(self):
         """Test handling of invalid URLs."""
         app = App()

@@ -4,6 +4,22 @@ import os
 from unittest.mock import Mock, patch
 
 
+def is_headless():
+    """
+    Detect if running in a headless environment (no display available).
+    Returns True if headless, False if display is available.
+    """
+    try:
+        import tkinter
+        # Try to create a Tk instance to check if display is available
+        root = tkinter.Tk()
+        root.destroy()
+        return False
+    except tkinter.TclError:
+        # TclError indicates no display available
+        return True
+
+
 @pytest.fixture
 def temp_dir():
     """Provides a temporary directory for testing."""
@@ -42,3 +58,13 @@ def sample_video_info():
         "width": 1920,
         "height": 1080
     }
+
+
+@pytest.fixture
+def skip_if_headless():
+    """
+    Skip test if running in headless environment (no display available).
+    This prevents Tkinter initialization errors in CI environments.
+    """
+    if is_headless():
+        pytest.skip("Skipping GUI test in headless environment")
