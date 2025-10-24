@@ -1,0 +1,81 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.spec
+*.exe
+*.log
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Temporary files
+*.tmp
+*.temp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Coverage
+.coverage
+# Virtual environments
+venv/
+.venv/
+
+# Testing
+.pytest_cache/
+.tox/
+.cache/
+htmlcov/
+.coverage.*
+coverage.xml
+nosetests.xml
+
+# Linting and type checking
+.mypy_cache/
+.ruff_cache/
+
+# Database
+*.db
+*.sqlite3
+
+# Environment variables
+.env
+
+# Logs
+logs/
+*.log
+
+# Python version management
+.python-version
+
+# Build artifacts
+.build/
+
+# Additional OS files
+desktop.ini
