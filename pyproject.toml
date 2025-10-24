@@ -28,7 +28,6 @@ dependencies = [
     "moviepy>=1.0.0",
     "customtkinter>=5.0.0",
 ]
-py-modules = ["twitter_downloader"]
 
 [project.urls]
 Homepage = "https://github.com/ax2bboud/twitter-downloader"
@@ -45,3 +44,6 @@ dev = [
     "pytest-cov",
     "pytest-xdist",
 ]
+
+[tool.setuptools]
+py-modules = ["twitter_downloader"]
