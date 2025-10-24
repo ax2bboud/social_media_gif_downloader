@@ -10,7 +10,6 @@ authors = [
     {name = "ax2bboud", email = "contact@ax2bboud.com"},
 ]
 readme = "README.md"
-license-files = ["LICENSE"]
 requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -46,4 +45,5 @@ dev = [
 ]
 
 [tool.setuptools]
+license-files = ["LICENSE"]
 py-modules = ["twitter_downloader"]
