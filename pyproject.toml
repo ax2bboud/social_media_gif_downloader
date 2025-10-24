@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "twitter-downloader"
-version = "1.0.0"
+version = "1.0.1"
 description = "A GUI application to download Twitter/X videos and convert them to GIFs"
 authors = [
     {name = "ax2bboud", email = ""},
