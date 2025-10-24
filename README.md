@@ -36,7 +36,7 @@ A user-friendly GUI application for downloading videos from Twitter/X posts and 
    ```
 
 ### Option 2: Use Pre-built Executable
-1. Download the latest release from the [Releases](https://github.com/yourusername/twitter-gif-downloader/releases) page.
+1. Download the latest release from the [Releases](https://github.com/ax2bboud/twitter-gif-downloader/releases) page.
 2. Extract the ZIP file.
 3. Run `twitter_downloader.exe` (Windows) or the appropriate executable for your platform.
 
@@ -51,13 +51,6 @@ A user-friendly GUI application for downloading videos from Twitter/X posts and 
 
 **Note**: Ensure the URL points to a valid Twitter/X post with video content. The tool supports various video formats and automatically selects the best quality available.
 
-## Screenshots
-
-![Main Interface](screenshots/main_interface.png)
-*Main application window with URL input and download button.*
-
-![Save Dialog](screenshots/save_dialog.png)
-*File save dialog for choosing GIF output location.*
 
 ## Requirements
 
@@ -88,7 +81,7 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch: `git push origin feature/your-feature-name`.
 5. Open a Pull Request.
 
-For bug reports or feature requests, please use the [Issues](https://github.com/yourusername/twitter-gif-downloader/issues) page.
+For bug reports or feature requests, please use the issues page.
 
 ---
 
