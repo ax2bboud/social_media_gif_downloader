@@ -1,11 +1,17 @@
 name: Version Bump
 
 on:
-  push:
-    branches:
-      - main
-      - master
   workflow_dispatch:
+    inputs:
+      bump_type:
+        description: 'Type of version bump'
+        required: true
+        default: 'patch'
+        type: choice
+        options:
+        - patch
+        - minor
+        - major
 
 jobs:
   version-bump:
@@ -32,7 +38,7 @@ jobs:
     - name: Run version bump
       id: bump
       run: |
-        python scripts/version_manager.py bump
+        python scripts/version_manager.py bump --bump-type ${{ inputs.bump_type }}
         NEW_VERSION=$(python scripts/version_manager.py get-current-version)
         echo "new_version=$NEW_VERSION" >> $GITHUB_OUTPUT
 
@@ -42,22 +48,3 @@ jobs:
         git config --local user.name "GitHub Action"
         git push
         git push --tags
-
-    - name: Create pull request for release
-      uses: peter-evans/create-pull-request@v5
-      with:
-        token: ${{ secrets.GITHUB_TOKEN }}
-        commit-message: "chore: bump version to ${{ steps.bump.outputs.new_version }}"
-        title: "Release v${{ steps.bump.outputs.new_version }}"
-        body: |
-          This PR was automatically created to prepare for release v${{ steps.bump.outputs.new_version }}.
-
-          ## Changes
-          - Version bumped to ${{ steps.bump.outputs.new_version }}
-          - Tag `v${{ steps.bump.outputs.new_version }}` created
-
-          ## Next Steps
-          - Review and merge this PR
-          - The release workflow will automatically trigger on the tag push
-        branch: release/v${{ steps.bump.outputs.new_version }}
-        delete-branch: true

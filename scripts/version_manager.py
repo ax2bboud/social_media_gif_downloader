@@ -176,26 +176,32 @@ class VersionManager:
             f"Release version {new_version}"
         ])
 
-    def bump(self, dry_run: bool = False) -> str:
+    def bump(self, bump_type: str = None, dry_run: bool = False) -> str:
         """Main bump function."""
         current_version = self.get_current_version()
-        last_tag = self.get_last_tag()
+        commits = []
 
-        if last_tag:
-            commits = self.get_commits_since_tag(last_tag)
-        else:
-            # If no tags, get all commits
-            commits = self.run_git_command(["log", "--oneline"]).split('\n')
+        if bump_type is None:
+            # Auto-detect bump type from commits
+            last_tag = self.get_last_tag()
 
-        if not commits:
-            print("No new commits since last tag. Skipping version bump.")
-            return current_version
+            if last_tag:
+                commits = self.get_commits_since_tag(last_tag)
+            else:
+                # If no tags, get all commits
+                commits = self.run_git_command(["log", "--oneline"]).split('\n')
 
-        bump_type = self.analyze_commits(commits)
+            if not commits:
+                print("No new commits since last tag. Skipping version bump.")
+                return current_version
+
+            bump_type = self.analyze_commits(commits)
+
         new_version = self.bump_version(current_version, bump_type)
 
         print(f"Current version: {current_version}")
-        print(f"Commits analyzed: {len(commits)}")
+        if commits:
+            print(f"Commits analyzed: {len(commits)}")
         print(f"Bump type: {bump_type}")
         print(f"New version: {new_version}")
 
@@ -223,6 +229,7 @@ def main():
 
     # bump command
     bump_parser = subparsers.add_parser("bump", help="Bump version based on commits")
+    bump_parser.add_argument("--bump-type", choices=["patch", "minor", "major"], help="Specify bump type (auto-detect if not provided)")
     bump_parser.add_argument("--dry-run", action="store_true", help="Show what would be done without making changes")
 
     # get-current-version command
@@ -238,7 +245,7 @@ def main():
 
     if args.command == "bump":
         try:
-            new_version = manager.bump(dry_run=args.dry_run)
+            new_version = manager.bump(bump_type=args.bump_type, dry_run=args.dry_run)
             if args.dry_run:
                 print(f"New version would be: {new_version}")
             else:
