@@ -10,7 +10,7 @@ authors = [
     {name = "ax2bboud", email = "contact@ax2bboud.com"},
 ]
 readme = "README.md"
-license = {file = "LICENSE"}
+license-files = ["LICENSE"]
 requires-python = ">=3.8"
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -38,10 +38,7 @@ Issues = "https://github.com/ax2bboud/twitter-downloader/issues"
 twitter-downloader = "twitter_downloader:main"
 
 [tool.setuptools]
-packages = ["twitter_downloader"]
-
-[tool.setuptools.package-data]
-twitter_downloader = ["*.ico"]
+py_modules = ["twitter_downloader"]
 [project.optional-dependencies]
 dev = [
     "pytest",
