@@ -30,6 +30,7 @@ jobs:
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
+        pip install tk
 
     - name: Run tests
       if: runner.os != 'Windows'
