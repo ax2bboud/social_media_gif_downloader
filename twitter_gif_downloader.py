@@ -60,7 +60,7 @@ else:
 
 
 # Now, when moviepy is imported, it will use the path we just set
-from moviepy import VideoFileClip 
+from moviepy.video.io.VideoFileClip import VideoFileClip
 import customtkinter as ctk
 import tkinter.filedialog as filedialog
 import threading
