@@ -92,7 +92,7 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp;." twitter_downloader.py
+        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp;." twitter_gif_downloader.py
 
     - name: Get version from pyproject.toml
       id: get_version
@@ -120,7 +120,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ${{ steps.artifact_name.outputs.name }}
-        path: dist/twitter_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        path: dist/twitter_gif_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
     needs: build

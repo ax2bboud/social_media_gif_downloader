@@ -34,7 +34,7 @@ Repository = "https://github.com/ax2bboud/twitter-downloader"
 Issues = "https://github.com/ax2bboud/twitter-downloader/issues"
 
 [project.scripts]
-twitter-downloader = "twitter_downloader:main"
+twitter-downloader = "twitter_gif_downloader:main"
 
 [project.optional-dependencies]
 dev = [

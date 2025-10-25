@@ -51,8 +51,8 @@ class TestPlatformDetection:
              patch.dict('os.environ', {}, clear=True):
             # Import after patching
             import importlib
-            import twitter_downloader
-            importlib.reload(twitter_downloader)
+            import twitter_gif_downloader
+            importlib.reload(twitter_gif_downloader)
 
             # Check that FFMPEG_BINARY is set during import
             # The environment variable should be set when the module is imported

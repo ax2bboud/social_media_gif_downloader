@@ -32,13 +32,13 @@ A user-friendly GUI application for downloading videos from Twitter/X posts and 
    ```
 5. Run the application:
    ```
-   python twitter_downloader.py
+   python twitter_gif_downloader.py
    ```
 
 ### Option 2: Use Pre-built Executable
 1. Download the latest release from the [Releases](https://github.com/ax2bboud/twitter-gif-downloader/releases) page.
 2. Extract the ZIP file.
-3. Run `twitter_downloader.exe` (Windows) or the appropriate executable for your platform.
+3. Run `twitter_gif_downloader.exe` (Windows) or the appropriate executable for your platform.
 
 ## Usage
 

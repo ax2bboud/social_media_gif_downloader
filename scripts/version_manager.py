@@ -24,7 +24,7 @@ class VersionManager:
     def __init__(self, repo_path: Path = None):
         self.repo_path = repo_path or Path(__file__).parent.parent
         self.pyproject_toml = self.repo_path / "pyproject.toml"
-        self.twitter_downloader_py = self.repo_path / "twitter_downloader.py"
+        self.twitter_downloader_py = self.repo_path / "twitter_gif_downloader.py"
         self.init_py = self.repo_path / "__init__.py"
 
     def run_git_command(self, cmd: list) -> str:
@@ -133,7 +133,7 @@ class VersionManager:
             f.write(content)
 
     def update_twitter_downloader_py(self, new_version: str) -> None:
-        """Update __version__ in twitter_downloader.py."""
+        """Update __version__ in twitter_gif_downloader.py."""
         with open(self.twitter_downloader_py, 'r') as f:
             content = f.read()
 
@@ -162,7 +162,7 @@ class VersionManager:
             return
 
         # Add files
-        self.run_git_command(["add", "pyproject.toml", "twitter_downloader.py", "__init__.py"])
+        self.run_git_command(["add", "pyproject.toml", "twitter_gif_downloader.py", "__init__.py"])
 
         # Check for staged changes
         status = self.run_git_command(["status", "--porcelain"])

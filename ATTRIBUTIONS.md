@@ -4,7 +4,7 @@ This file provides attributions for all dependencies used in the twitter_downloa
 
 ## Project License
 
-**twitter_downloader** is licensed under the MIT License.
+**twitter_gif_downloader** is licensed under the MIT License.
 
 Copyright (c) 2024 ax2bboud
 

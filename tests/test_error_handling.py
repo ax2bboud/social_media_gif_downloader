@@ -12,8 +12,12 @@ class TestErrorHandling:
     @pytest.mark.skipif(is_headless(), reason="Skipping GUI test in headless environment")
     def test_get_video_info_subprocess_error(self, mock_subprocess):
         """Test handling of yt-dlp subprocess errors."""
-        with patch('os.environ', {'DISPLAY': ':99'}):
+        # Mock the entire App class to avoid GUI initialization
+        with patch('twitter_gif_downloader.App') as mock_app_class:
+            mock_app = Mock()
+            mock_app_class.return_value = mock_app
             app = App()
+
         mock_subprocess.side_effect = Exception("Subprocess failed")
 
         with patch.object(app, 'update_status') as mock_update:
