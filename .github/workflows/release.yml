@@ -91,7 +91,12 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data="ffmpeg;." --add-data="yt-dlp;." twitter_gif_downloader.py
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp;." twitter_gif_downloader.py
+        else
+          pyinstaller --onefile --windowed --icon=app_icon.ico --add-data="ffmpeg:." --add-data="yt-dlp:." twitter_gif_downloader.py
+        fi
+      shell: bash
 
     - name: Get version from tag
       id: get_version
