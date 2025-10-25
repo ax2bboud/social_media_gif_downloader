@@ -39,7 +39,7 @@ jobs:
     - name: Run tests (Windows)
       if: runner.os == 'Windows'
       run: |
-        $env:PYTHONPATH = "$PWD"
+        $env:PYTHONPATH="$PWD"
         pytest --cov=twitter_gif_downloader --cov-report=xml
 
   build:
