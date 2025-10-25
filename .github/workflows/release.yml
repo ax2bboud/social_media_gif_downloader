@@ -32,12 +32,15 @@ jobs:
         pip install -e .[dev]
 
     - name: Run tests
+      if: runner.os != 'Windows'
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          $env:PYTHONPATH="$PWD" ; pytest --cov=twitter_gif_downloader --cov-report=xml
-        else
-          PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
-        fi
+        PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
+      shell: bash
+    - name: Run tests (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        $env:PYTHONPATH = "$PWD"
+        pytest --cov=twitter_gif_downloader --cov-report=xml
 
   build:
     needs: test
