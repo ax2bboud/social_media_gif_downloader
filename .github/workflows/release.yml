@@ -33,7 +33,11 @@ jobs:
 
     - name: Run tests
       run: |
-        PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          $env:PYTHONPATH="$PWD" ; pytest --cov=twitter_gif_downloader --cov-report=xml
+        else
+          PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
+        fi
 
   build:
     needs: test
