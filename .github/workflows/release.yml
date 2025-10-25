@@ -40,7 +40,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         set PYTHONPATH=%CD%
-        python -m pytest --cov=twitter_gif_downloader --cov-report=xml
+        python -m pytest --cov=twitter_gif_downloader --cov-report=xml --tb=short -x --disable-warnings
 
   build:
     needs: test
