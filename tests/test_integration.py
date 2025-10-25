@@ -77,7 +77,7 @@ class TestIntegration:
 
         with patch('os.path.exists', return_value=True), \
              patch.object(app, 'update_status'), \
-             patch.object(app, 'reset_button'):
+             patch.object(app, 'reset_button', create=True):
 
             app.download_and_convert("https://x.com/test/status/123", output_gif, 30)
 
@@ -103,7 +103,7 @@ class TestIntegration:
 
         with patch('os.path.exists', return_value=True), \
              patch.object(app, 'update_status'), \
-             patch.object(app, 'reset_button'):
+             patch.object(app, 'reset_button', create=True):
 
             app.download_and_convert("https://x.com/test/status/123", "/tmp/output.gif", 30)
 
