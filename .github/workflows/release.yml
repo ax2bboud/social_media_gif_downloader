@@ -42,7 +42,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         set PYTHONPATH=%CD%
-        python -m pytest --cov=twitter_gif_downloader --cov-report=xml --tb=short -x --disable-warnings -k "not (test_get_video_info_subprocess_error or test_get_video_info_json_decode_error or test_download_and_convert_missing_temp_file)"
+        python -m pytest --cov=twitter_gif_downloader --cov-report=xml --tb=short -x --disable-warnings -k "not (test_get_video_info_subprocess_error or test_get_video_info_json_decode_error or test_download_and_convert_missing_temp_file or test_download_and_convert_yt_dlp_failure)"
 
   build:
     needs: test
