@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests
       run: |
-        pytest --cov=twitter_downloader --cov-report=xml
+        PYTHONPATH=$PWD pytest --cov=twitter_downloader --cov-report=xml
 
   build:
     needs: test
