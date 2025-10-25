@@ -66,26 +66,28 @@ jobs:
 
     - name: Download FFmpeg
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
-          unzip ffmpeg.zip
-          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe .
+        if [ "$RUNNER_OS" == "Linux" ]; then
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          cp /usr/bin/ffmpeg .
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install ffmpeg
           cp $(brew --prefix ffmpeg)/bin/ffmpeg .
         else
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          cp /usr/bin/ffmpeg .
+          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
+          unzip ffmpeg.zip
+          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe .
         fi
+      shell: bash
 
     - name: Download yt-dlp
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
-        else
+        if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
           curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
           chmod +x yt-dlp
+        else
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
         fi
+      shell: bash
 
     - name: Build executable with PyInstaller
       run: |
