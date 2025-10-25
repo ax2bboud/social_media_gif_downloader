@@ -33,7 +33,7 @@ jobs:
 
     - name: Run tests
       run: |
-        PYTHONPATH=$PWD pytest --cov=twitter_downloader --cov-report=xml
+        PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
 
   build:
     needs: test
@@ -86,7 +86,7 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp;." twitter_downloader.py
+        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp;." twitter_gif_downloader.py
 
     - name: Get version from tag
       id: get_version
@@ -114,7 +114,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: ${{ steps.artifact_name.outputs.name }}
-        path: dist/twitter_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        path: dist/twitter_gif_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
     needs: build
