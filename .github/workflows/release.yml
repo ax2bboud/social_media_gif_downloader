@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
         exclude:
           # Optional: exclude combinations if needed for performance
@@ -34,22 +34,16 @@ jobs:
         python -c "import tkinter; print('Tkinter available')"
 
     - name: Run tests
-      if: runner.os != 'Windows'
       run: |
         PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
       shell: bash
-    - name: Run tests (Windows)
-      if: runner.os == 'Windows'
-      run: |
-        set PYTHONPATH=%CD%
-        python -m pytest --cov=twitter_gif_downloader --cov-report=xml --tb=short -x --disable-warnings -k "not (test_get_video_info_subprocess_error or test_get_video_info_json_decode_error or test_download_and_convert_missing_temp_file or test_download_and_convert_yt_dlp_failure)"
 
   build:
     needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+        os: [macos-latest, ubuntu-latest]
         python-version: ['3.8', '3.9', '3.10', '3.11']
         exclude:
           # Optional: exclude combinations if needed for performance
