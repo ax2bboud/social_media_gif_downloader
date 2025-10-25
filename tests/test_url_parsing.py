@@ -1,5 +1,5 @@
 import pytest
-from twitter_downloader import App
+from twitter_gif_downloader import App
 from tests.conftest import is_headless
 
 

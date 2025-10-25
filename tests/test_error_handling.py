@@ -2,7 +2,7 @@ import pytest
 import json
 import os
 from unittest.mock import patch, Mock
-from twitter_downloader import App
+from twitter_gif_downloader import App
 from tests.conftest import is_headless
 
 

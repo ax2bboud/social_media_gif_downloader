@@ -12,7 +12,7 @@ class TestPlatformDetection:
     def test_yt_dlp_executable_windows(self):
         """Test yt-dlp executable detection on Windows."""
         with patch('platform.system', return_value='Windows'):
-            from twitter_downloader import App
+            from twitter_gif_downloader import App
             app = App()
             # Test that the method uses yt-dlp.exe on Windows
             # This is tested indirectly through the subprocess calls
@@ -21,7 +21,7 @@ class TestPlatformDetection:
     def test_yt_dlp_executable_unix(self):
         """Test yt-dlp executable detection on Unix-like systems."""
         with patch('platform.system', return_value='Linux'):
-            from twitter_downloader import App
+            from twitter_gif_downloader import App
             app = App()
             # Test that the method uses yt-dlp on Unix
 
