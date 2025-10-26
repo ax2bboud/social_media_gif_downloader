@@ -12,7 +12,7 @@ This project uses the following third-party libraries:
 For full attributions and license texts, see ATTRIBUTIONS.md.
 """
 
-__version__ = "1.0.1"
+__version__ = "1.1.0"
 
 import sys
 import os
@@ -76,7 +76,7 @@ class App(ctk.CTk):
         super().__init__()
 
         # --- Window Setup ---
-        self.title("Twitter GIF Downloader")
+        self.title("Social Media GIF Downloader")
         self.geometry("500x250")
         ctk.set_appearance_mode("System")
 
@@ -85,10 +85,10 @@ class App(ctk.CTk):
         self.grid_rowconfigure(2, weight=1)
 
         # URL Entry
-        self.url_label = ctk.CTkLabel(self, text="Paste Twitter/X Post URL:")
+        self.url_label = ctk.CTkLabel(self, text="Paste Social Media Post URL:")
         self.url_label.grid(row=0, column=0, padx=20, pady=(20, 5), sticky="w")
 
-        self.url_entry = ctk.CTkEntry(self, placeholder_text="https://x.com/user/status/123...")
+        self.url_entry = ctk.CTkEntry(self, placeholder_text="https://x.com/user/status/123... or https://pinterest.com/pin/123... or https://instagram.com/p/... or /reel/...")
         self.url_entry.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
 
         # Download Button
@@ -98,18 +98,53 @@ class App(ctk.CTk):
         )
         self.download_button.grid(row=2, column=0, padx=20, pady=20, sticky="n")
 
+        # Supported platforms info
+        self.platforms_label = ctk.CTkLabel(
+            self,
+            text="Supports: Twitter/X, Pinterest, Instagram (videos only)",
+            font=("", 10)
+        )
+        self.platforms_label.grid(row=4, column=0, padx=20, pady=(5, 20), sticky="w")
+
         # Status Label
         self.status_label = ctk.CTkLabel(self, text="")
         self.status_label.grid(row=3, column=0, padx=20, pady=(10, 20), sticky="w")
 
+    def detect_platform(self, url: str) -> str:
+        """
+        Detects the social media platform from the URL.
+        Returns: 'twitter', 'pinterest', 'instagram', or 'unknown'
+        """
+        if 'twitter.com' in url or 'x.com' in url:
+            return 'twitter'
+        elif 'pinterest.com' in url:
+            return 'pinterest'
+        elif 'instagram.com' in url:
+            return 'instagram'
+        return 'unknown'
+
     def get_id_from_url(self, url: str) -> str:
         """
-        Parses the tweet ID from the URL to use as a filename.
+        Parses the post/pin ID from the URL to use as a filename.
+        Supports Twitter/X, Pinterest, and Instagram URLs.
         """
-        match = re.search(r"status/(\d+)", url)
-        if match:
-            return match.group(1)
-        return "tweet_video"
+        platform = self.detect_platform(url)
+
+        if platform == 'twitter':
+            match = re.search(r"status/(\d+)", url)
+            if match:
+                return match.group(1)
+        elif platform == 'pinterest':
+            match = re.search(r"pin/(\d+)/?", url)
+            if match:
+                return match.group(1)
+        elif platform == 'instagram':
+            # Handle both posts (/p/) and reels (/reel/)
+            match = re.search(r"(?:p|reel)/([A-Za-z0-9_-]+)", url)
+            if match:
+                return match.group(1)
+
+        return "social_media_post"
 
     def start_get_info_thread(self) -> None:
         """
@@ -118,6 +153,11 @@ class App(ctk.CTk):
         url = self.url_entry.get()
         if not url:
             self.update_status("Error: Please paste a URL first.", "red")
+            return
+
+        platform = self.detect_platform(url)
+        if platform == 'unknown':
+            self.update_status("Error: Unsupported platform. Please use Twitter/X, Pinterest, or Instagram URLs.", "red")
             return
 
         self.download_button.configure(state="disabled", text="Getting info...")
@@ -208,9 +248,11 @@ class App(ctk.CTk):
     def download_and_convert(self, url: str, output_gif_file: str, video_fps: int) -> None:
         """
         (Background Thread)
-        The main logic: downloads video, converts to GIF, and cleans up.
+        The main logic: downloads video/GIF, converts to GIF if needed, and cleans up.
         """
         try:
+            platform = self.detect_platform(url)
+
             # Log ffmpeg path
             ffmpeg_env = os.environ.get("FFMPEG_BINARY", "Not set")
             logging.info(f"FFMPEG_BINARY: {ffmpeg_env}")
@@ -220,13 +262,26 @@ class App(ctk.CTk):
                 logging.info(f"Frozen mode: base_path = {base_path}")
 
             yt_dlp_executable = 'yt-dlp.exe' if platform.system() == "Windows" else 'yt-dlp'
-            yt_dlp_command_dl = [
-                yt_dlp_executable,
-                '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
-                '-o', TEMP_VIDEO_FILE,
-                '--force-overwrites',
-                url
-            ]
+
+            # For Pinterest, try to download GIFs directly if available, otherwise video
+            if platform == 'pinterest':
+                yt_dlp_command_dl = [
+                    yt_dlp_executable,
+                    '-f', 'best[ext=gif]/bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                    '-o', TEMP_VIDEO_FILE,
+                    '--force-overwrites',
+                    url
+                ]
+            else:
+                # For Twitter and Instagram, download video
+                yt_dlp_command_dl = [
+                    yt_dlp_executable,
+                    '-f', 'bestvideo[ext=mp4]+bestaudio[ext=m4a]/best[ext=mp4]/best',
+                    '-o', TEMP_VIDEO_FILE,
+                    '--force-overwrites',
+                    url
+                ]
+
             result_dl = subprocess.run(
                 yt_dlp_command_dl,
                 capture_output=True,
@@ -247,6 +302,14 @@ class App(ctk.CTk):
             # Log file size
             file_size = os.path.getsize(TEMP_VIDEO_FILE)
             logging.info(f"TEMP_VIDEO_FILE exists, size: {file_size} bytes")
+
+            # Check if downloaded file is already a GIF (Pinterest case)
+            if TEMP_VIDEO_FILE.lower().endswith('.gif'):
+                # Just copy the GIF file
+                import shutil
+                shutil.copy2(TEMP_VIDEO_FILE, output_gif_file)
+                self.update_status(f"Success! Saved as {os.path.basename(output_gif_file)}", "green")
+                return
 
             self.update_status(f"Converting to GIF at {video_fps} FPS...", "white")
 
