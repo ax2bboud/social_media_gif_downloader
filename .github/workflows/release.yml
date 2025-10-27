@@ -126,7 +126,7 @@ jobs:
     - name: Rename executable
       run: |
         if [ "${{ matrix.os }}" == "macos-latest" ]; then
-          mv "dist/Social Media GIF Downloader.app" "dist/social-media-gif-downloader-${{ matrix.os }}.app"
+          mv "dist/Social Media GIF Downloader.app" "dist/social-media-gif-downloader-${{ matrix.os }}.app" || mv "dist/social-media-gif-downloader${{ matrix.ext }}" "dist/social-media-gif-downloader-${{ matrix.os }}${{ matrix.ext }}"
         else
           mv dist/social-media-gif-downloader${{ matrix.ext }} "dist/social-media-gif-downloader-${{ matrix.os }}${{ matrix.ext }}"
         fi
