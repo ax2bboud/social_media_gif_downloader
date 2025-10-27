@@ -106,6 +106,7 @@ jobs:
       run: |
         VERSION=${GITHUB_REF#refs/tags/v}
         echo "version=$VERSION" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Create artifact name
       id: artifact_name
@@ -122,6 +123,7 @@ jobs:
         fi
         ARTIFACT_NAME="social-media-gif-downloader-${{ steps.get_version.outputs.version }}-${RUNNER_OS,,}-$ARCH$EXT"
         echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
