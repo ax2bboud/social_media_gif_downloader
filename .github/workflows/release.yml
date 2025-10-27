@@ -77,8 +77,8 @@ jobs:
         else
           curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
           unzip ffmpeg.zip
-          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe ffmpeg.exe
-          mv ffmpeg-*-essentials_build/bin/ffprobe.exe ffprobe.exe
+          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe ffmpeg
+          mv ffmpeg-*-essentials_build/bin/ffprobe.exe ffprobe
         fi
       shell: bash
 
