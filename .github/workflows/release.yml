@@ -69,13 +69,16 @@ jobs:
         if [ "$RUNNER_OS" == "Linux" ]; then
           sudo apt-get update && sudo apt-get install -y ffmpeg
           cp /usr/bin/ffmpeg .
+          cp /usr/bin/ffprobe .
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install ffmpeg
           cp $(brew --prefix ffmpeg)/bin/ffmpeg .
+          cp $(brew --prefix ffmpeg)/bin/ffprobe .
         else
           curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
           unzip ffmpeg.zip
           mv ffmpeg-*-essentials_build/bin/ffmpeg.exe ffmpeg.exe
+          mv ffmpeg-*-essentials_build/bin/ffprobe.exe ffprobe.exe
         fi
       shell: bash
 
@@ -92,7 +95,7 @@ jobs:
     - name: Build executable with PyInstaller
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          pyinstaller --onefile --windowed --icon=app_icon.ico --add-binary "ffmpeg.exe;." --add-binary "ffprobe.exe;." --add-binary "yt-dlp.exe;." social_media_gif_downloader.py
+          pyinstaller social-media-gif-downloader.spec
         else
           pyinstaller --onefile --windowed --icon=app_icon.ico --add-binary="ffmpeg:." --add-binary="ffprobe:." --add-binary="yt-dlp:." social_media_gif_downloader.py
         fi
