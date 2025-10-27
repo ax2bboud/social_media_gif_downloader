@@ -94,11 +94,7 @@ jobs:
 
     - name: Build executable with PyInstaller
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          pyinstaller social-media-gif-downloader.spec
-        else
-          pyinstaller --onefile --windowed --icon=app_icon.ico --add-binary="ffmpeg:." --add-binary="ffprobe:." --add-binary="yt-dlp:." social_media_gif_downloader.py
-        fi
+        pyinstaller --onefile --windowed --icon=app_icon.ico --add-binary="ffmpeg:." --add-binary="ffprobe:." --add-binary="yt-dlp:." social_media_gif_downloader.py
       shell: bash
 
     - name: Get version from tag
