@@ -65,7 +65,7 @@ import customtkinter as ctk
 import tkinter.filedialog as filedialog
 import threading
 import subprocess
-from platforms import get_platform_downloader
+from platforms import get_platform_downloader, TwitterDownloader, PinterestDownloader, InstagramDownloader
 
 
 # --- Constants ---
