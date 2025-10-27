@@ -108,9 +108,9 @@ jobs:
         fi
 
         if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          sed -i "s/binaries=\[]/binaries=[('ffmpeg.exe', '.'), ('ffprobe.exe', '.'), ('yt-dlp.exe', '.')]/g" social-media-gif-downloader.spec
+          sed -i 's/binaries=\[]/binaries=[('\''ffmpeg.exe'\'', '\''.'\''), ('\''ffprobe.exe'\'', '\''.'\''), ('\''yt-dlp.exe'\'', '\''.'\'')]/g' social-media-gif-downloader.spec
         else
-          sed -i "s/binaries=\[]/binaries=[('ffmpeg', '.'), ('ffprobe', '.'), ('yt-dlp', '.')]/g" social-media-gif-downloader.spec
+          sed -i 's/binaries=\[]/binaries=[('\''ffmpeg'\'', '\''.'\''), ('\''ffprobe'\'', '\''.'\''), ('\''yt-dlp'\'', '\''.'\'')]/g' social-media-gif-downloader.spec
         fi
       shell: bash
 
