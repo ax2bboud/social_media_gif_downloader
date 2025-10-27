@@ -123,7 +123,7 @@ jobs:
         fi
         RUNNER_OS_LOWER=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
         VERSION_CLEAN=$(echo "${{ steps.get_version.outputs.version }}" | tr '/' '-')
-        ARTIFACT_NAME="social-media-gif-downloader-${VERSION_CLEAN}-${RUNNER_OS_LOWER}-$ARCH$EXT"
+        ARTIFACT_NAME="social-media-gif-downloader-${VERSION_CLEAN}-${RUNNER_OS_LOWER}-${{ matrix.python-version }}-$ARCH$EXT"
         echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
       shell: bash
 
