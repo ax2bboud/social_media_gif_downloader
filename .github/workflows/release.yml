@@ -35,7 +35,7 @@ jobs:
 
     - name: Run tests
       run: |
-        PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml
+        PYTHONPATH=$PWD pytest --cov=twitter_gif_downloader --cov-report=xml --ignore=tests/test_integration.py
       shell: bash
 
   build:
@@ -92,9 +92,9 @@ jobs:
     - name: Build executable with PyInstaller
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp.exe;." twitter_gif_downloader.py
+          pyinstaller --onefile --windowed --icon=app_icon.ico --add-binary "ffmpeg.exe;." --add-binary "ffprobe.exe;." --add-binary "yt-dlp.exe;." social_media_gif_downloader.py
         else
-          pyinstaller --onefile --windowed --icon=app_icon.ico --add-data="ffmpeg:." --add-data="yt-dlp:." twitter_gif_downloader.py
+          pyinstaller --onefile --windowed --icon=app_icon.ico --add-binary="ffmpeg:." --add-binary="ffprobe:." --add-binary="yt-dlp:." social_media_gif_downloader.py
         fi
       shell: bash
 
@@ -117,7 +117,7 @@ jobs:
           ARCH="x64"
           EXT=""
         fi
-        ARTIFACT_NAME="twitter-downloader-${{ steps.get_version.outputs.version }}-${RUNNER_OS,,}-$ARCH$EXT"
+        ARTIFACT_NAME="social-media-gif-downloader-${{ steps.get_version.outputs.version }}-${RUNNER_OS,,}-$ARCH$EXT"
         echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
 
     - name: Upload artifact

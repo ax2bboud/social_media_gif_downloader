@@ -46,4 +46,4 @@ dev = [
 
 [tool.setuptools]
 license-files = ["LICENSE"]
-py-modules = ["twitter_gif_downloader"]
+py-modules = ["social_media_gif_downloader"]
