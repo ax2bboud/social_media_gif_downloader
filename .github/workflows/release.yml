@@ -121,8 +121,9 @@ jobs:
           ARCH="x64"
           EXT=""
         fi
-        RUNNER_OS_LOWER=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]')
-        ARTIFACT_NAME="social-media-gif-downloader-${{ steps.get_version.outputs.version }}-${RUNNER_OS_LOWER}-$ARCH$EXT"
+        RUNNER_OS_LOWER=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
+        VERSION_CLEAN=$(echo "${{ steps.get_version.outputs.version }}" | tr '/' '-')
+        ARTIFACT_NAME="social-media-gif-downloader-${VERSION_CLEAN}-${RUNNER_OS_LOWER}-$ARCH$EXT"
         echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
       shell: bash
 
