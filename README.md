@@ -21,26 +21,40 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
 - FFmpeg (required for video processing; install system-wide)
 - yt-dlp (for video downloading; can be installed via pip or system package manager)
 
-### Option 1: Run from Source
-1. Clone or download the repository.
-2. Install FFmpeg:
-   - **Windows**: Download from [https://ffmpeg.org/download.html#build-windows](https://ffmpeg.org/download.html#build-windows) and add to PATH.
-   - **macOS**: `brew install ffmpeg`
-   - **Linux**: `sudo apt install ffmpeg` (Ubuntu/Debian) or equivalent for your distribution.
-3. Install yt-dlp (optional, as it's included in requirements; for system-wide: `pip install yt-dlp` or use package manager).
-4. Install required Python packages:
-   ```
-   pip install -r requirements.txt
-   ```
-5. Run the application:
-   ```
-   python twitter_gif_downloader.py
-   ```
+### Recommended: Install from PyPI
+1. Install FFmpeg:
+    - **Windows**: Download from [https://ffmpeg.org/download.html#build-windows](https://ffmpeg.org/download.html#build-windows) and add to PATH.
+    - **macOS**: `brew install ffmpeg`
+    - **Linux**: `sudo apt install ffmpeg` (Ubuntu/Debian) or equivalent for your distribution.
+2. Install the package:
+    ```bash
+    pip install social-media-gif-downloader
+    ```
+3. Run the application:
+    ```bash
+    social-media-gif-downloader
+    ```
 
-### Option 2: Use Pre-built Executable
-1. Download the latest release from the [Releases](https://github.com/ax2bboud/social-media-gif-downloader/releases) page.
-2. Extract the ZIP file.
-3. Run `social_media_gif_downloader.exe` (Windows) or the appropriate executable for your platform.
+### Alternative: Run from Source
+1. Clone or download the repository.
+2. Install FFmpeg (see prerequisites above).
+3. Install required Python packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4. Run the application:
+    ```bash
+    python social_media_gif_downloader.py
+    ```
+
+### Optional: Build Your Own Executable
+If you prefer a standalone executable, you can build one locally:
+
+1. Install PyInstaller: `pip install pyinstaller`
+2. Download FFmpeg and yt-dlp binaries for your platform (see CI workflow for details)
+3. Run: `pyinstaller --onefile --windowed social_media_gif_downloader.py`
+
+**Note**: Pre-built executables are available on-demand via GitHub Actions workflow dispatch.
 
 ## Usage
 

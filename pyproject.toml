@@ -34,7 +34,7 @@ Repository = "https://github.com/ax2bboud/social-media-gif-downloader"
 Issues = "https://github.com/ax2bboud/social-media-gif-downloader/issues"
 
 [project.scripts]
-social-media-gif-downloader = "twitter_gif_downloader:main"
+social-media-gif-downloader = "social_media_gif_downloader:main"
 
 [project.optional-dependencies]
 dev = [
