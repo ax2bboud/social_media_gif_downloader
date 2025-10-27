@@ -130,7 +130,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.artifact_name.outputs.name }}
-        path: dist/twitter_gif_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        path: dist/social-media-gif-downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
 
   release:
     needs: build
