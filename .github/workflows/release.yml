@@ -103,14 +103,14 @@ jobs:
       run: |
         if [ "${{ matrix.os }}" == "macos-latest" ]; then
           pyi-makespec social_media_gif_downloader.py --name "Social Media GIF Downloader" --windowed --icon=app_icon.ico
+          sed -i '' 's/binaries=\[]/binaries=[("ffmpeg", "."), ("ffprobe", "."), ("yt-dlp", ".")]/g' "Social Media GIF Downloader.spec"
         else
           pyi-makespec social_media_gif_downloader.py --name social-media-gif-downloader --onefile --windowed --icon=app_icon.ico
-        fi
-
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          sed -i 's/binaries=\[]/binaries=[('\''ffmpeg.exe'\'', '\''.'\''), ('\''ffprobe.exe'\'', '\''.'\''), ('\''yt-dlp.exe'\'', '\''.'\'')]/g' social-media-gif-downloader.spec
-        else
-          sed -i 's/binaries=\[]/binaries=[('\''ffmpeg'\'', '\''.'\''), ('\''ffprobe'\'', '\''.'\''), ('\''yt-dlp'\'', '\''.'\'')]/g' social-media-gif-downloader.spec
+          if [ "${{ matrix.os }}" == "windows-latest" ]; then
+            sed -i 's/binaries=\[]/binaries=[("ffmpeg.exe", "."), ("ffprobe.exe", "."), ("yt-dlp.exe", ".")]/g' social-media-gif-downloader.spec
+          else
+            sed -i 's/binaries=\[]/binaries=[("ffmpeg", "."), ("ffprobe", "."), ("yt-dlp", ".")]/g' social-media-gif-downloader.spec
+          fi
         fi
       shell: bash
 
