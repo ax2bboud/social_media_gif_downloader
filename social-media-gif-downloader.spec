@@ -4,7 +4,7 @@
 a = Analysis(
     ['social_media_gif_downloader.py'],
     pathex=[],
-    binaries=[('ffmpeg.exe', '.'), ('ffprobe.exe', '.')],
+    binaries=[('ffmpeg', '.'), ('ffprobe', '.'), ('yt-dlp', '.')],
     datas=[],
     hiddenimports=[],
     hookspath=[],
