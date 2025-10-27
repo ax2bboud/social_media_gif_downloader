@@ -6,32 +6,30 @@ on:
       - 'v*.*.*'
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   test:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [macos-latest, ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-        exclude:
-          # Optional: exclude combinations if needed for performance
-          - os: macos-latest
-            python-version: '3.8'
+        os: [windows-latest, macos-latest, ubuntu-latest]
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.11
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .[dev]
         pip install tk
-        python -c "import tkinter; print('Tkinter available')"
+      shell: bash
 
     - name: Run tests
       run: |
@@ -40,23 +38,27 @@ jobs:
 
   build:
     needs: test
-    runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-        exclude:
-          # Optional: exclude combinations if needed for performance
+        include:
+          - os: ubuntu-latest
+            os-name: ubuntu
+            ext: ""
           - os: macos-latest
-            python-version: '3.8'
+            os-name: macos
+            ext: ".zip"
+          - os: windows-latest
+            os-name: windows
+            ext: ".exe"
+    runs-on: ${{ matrix.os }}
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python 3.11
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: 3.11
 
     - name: Install dependencies
       run: |
@@ -66,68 +68,82 @@ jobs:
 
     - name: Download FFmpeg
       run: |
-        if [ "$RUNNER_OS" == "Linux" ]; then
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          cp /usr/bin/ffmpeg .
-          cp /usr/bin/ffprobe .
-        elif [ "$RUNNER_OS" == "macOS" ]; then
+        if [ "${{ matrix.os-name }}" == "windows" ]; then
+          choco install ffmpeg
+          cp C:/ProgramData/chocolatey/bin/ffmpeg.exe .
+          cp C:/ProgramData/chocolatey/bin/ffprobe.exe .
+        elif [ "${{ matrix.os-name }}" == "macos" ]; then
           brew install ffmpeg
           cp $(brew --prefix ffmpeg)/bin/ffmpeg .
           cp $(brew --prefix ffmpeg)/bin/ffprobe .
         else
-          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
-          unzip ffmpeg.zip
-          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe ffmpeg
-          mv ffmpeg-*-essentials_build/bin/ffprobe.exe ffprobe
+          sudo apt-get update && sudo apt-get install -y ffmpeg
+          cp /usr/bin/ffmpeg .
+          cp /usr/bin/ffprobe .
         fi
       shell: bash
 
     - name: Download yt-dlp
       run: |
-        if [ "$RUNNER_OS" == "Linux" ] || [ "$RUNNER_OS" == "macOS" ]; then
+        if [ "${{ matrix.os-name }}" == "windows" ]; then
+          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
+        else
           curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
           chmod +x yt-dlp
-        else
-          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp
         fi
       shell: bash
-
-    - name: Build executable with PyInstaller
+    
+    - name: Generate and modify .spec file
       run: |
-        pyinstaller social-media-gif-downloader.spec
+        if [ "${{ matrix.os-name }}" == "macos" ]; then
+          pyi-makespec social_media_gif_downloader.py --name "Social Media GIF Downloader" --windowed --icon=app_icon.ico
+        else
+          pyi-makespec social_media_gif_downloader.py --name social-media-gif-downloader --onefile --windowed --icon=app_icon.ico
+        fi
+        
+        if [ "${{ matrix.os-name }}" == "windows" ]; then
+          sed -i "s/binaries=\[]/binaries=[('ffmpeg.exe', '.'), ('ffprobe.exe', '.'), ('yt-dlp.exe', '.')]/" social-media-gif-downloader.spec
+        else
+          sed -i -e "s/binaries=\[]/binaries=[('ffmpeg', '.'), ('ffprobe', '.'), ('yt-dlp', '.')]/" social-media-gif-downloader.spec
+        fi
+      shell: bash
+    
+    - name: Build executable with PyInstaller
+      run: pyinstaller social-media-gif-downloader.spec
       shell: bash
 
     - name: Get version from tag
       id: get_version
-      run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
+      run: echo "version=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
       shell: bash
 
     - name: Create artifact name
       id: artifact_name
       run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          ARCH="x64"
-          EXT=".exe"
-        elif [ "$RUNNER_OS" == "macOS" ]; then
-          ARCH="x64"
-          EXT=""
-        else
-          ARCH="x64"
-          EXT=""
-        fi
-        RUNNER_OS_LOWER=$(echo "$RUNNER_OS" | tr '[:upper:]' '[:lower:]' | tr '/' '-')
-        VERSION_CLEAN=$(echo "${{ steps.get_version.outputs.version }}" | tr '/' '-')
-        ARTIFACT_NAME="social-media-gif-downloader-${VERSION_CLEAN}-${RUNNER_OS_LOWER}-${{ matrix.python-version }}-$ARCH$EXT"
+        VERSION=${{ steps.get_version.outputs.version }}
+        ARTIFACT_NAME="social-media-gif-downloader-v${VERSION}-${{ matrix.os-name }}-x64"
         echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+      shell: bash
+
+    - name: Package macOS .app bundle
+      if: matrix.os-name == 'macos'
+      run: |
+        mv "dist/Social Media GIF Downloader.app" "dist/${{ steps.artifact_name.outputs.name }}.app"
+        zip -r "dist/${{ steps.artifact_name.outputs.name }}.zip" "dist/${{ steps.artifact_name.outputs.name }}.app"
+      shell: bash
+
+    - name: Rename executable
+      if: matrix.os-name != 'macos'
+      run: |
+        mv dist/social-media-gif-downloader${{ matrix.ext }} "dist/${{ steps.artifact_name.outputs.name }}${{ matrix.ext }}"
       shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
         name: ${{ steps.artifact_name.outputs.name }}
-        path: dist/social-media-gif-downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        path: |
+          dist/${{ steps.artifact_name.outputs.name }}${{ matrix.ext }}
 
   release:
     needs: build
@@ -142,21 +158,25 @@ jobs:
     - name: Get version
       id: get_version
       run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "version=$(echo "${{ github.ref }}" | sed 's/refs\/tags\/v//')" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Verify version consistency
       run: |
         PYPROJECT_VERSION=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-        if [ "$PYPROJECT_VERSION" != "$VERSION" ]; then
-          echo "Version mismatch: tag=$VERSION, pyproject.toml=$PYPROJECT_VERSION"
+        if [ "$PYPROJECT_VERSION" != "${{ steps.get_version.outputs.version }}" ]; then
+          echo "Version mismatch: tag=${{ steps.get_version.outputs.version }}, pyproject.toml=$PYPROJECT_VERSION"
           exit 1
         fi
+      shell: bash
 
     - name: Download all artifacts
       uses: actions/download-artifact@v4
       with:
-        path: artifacts/
+        path: release-assets
+
+    - name: List downloaded files for debugging
+      run: ls -R release-assets
 
     - name: Generate release notes
       id: release_notes
@@ -175,6 +195,7 @@ jobs:
         echo "## Downloads" >> $GITHUB_OUTPUT
         echo "Download the appropriate executable for your platform from the assets below." >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
@@ -182,6 +203,6 @@ jobs:
         tag_name: v${{ steps.get_version.outputs.version }}
         name: Release v${{ steps.get_version.outputs.version }}
         body: ${{ steps.release_notes.outputs.notes }}
-        files: artifacts/**/*
+        files: release-assets/**/*
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
