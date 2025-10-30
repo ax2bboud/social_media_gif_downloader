@@ -1,12 +1,14 @@
-# Twitter GIF Downloader
+# Social Media GIF Downloader
 
-A user-friendly GUI application for downloading videos from Twitter/X posts and converting them to GIF format. Built with Python, this tool leverages yt-dlp for video downloading and moviepy for high-quality GIF conversion, ensuring optimal frame rates and seamless performance.
+A user-friendly GUI application for downloading videos and GIFs from Twitter/X, Pinterest, and Instagram posts and converting them to GIF format. Built with Python, this tool leverages yt-dlp for media downloading and moviepy for high-quality GIF conversion, ensuring optimal frame rates and seamless performance.
 
 ## Features
 
+- **Multi-Platform Support**: Download from Twitter/X, Pinterest, and Instagram (videos only from Instagram)
 - **Simple GUI Interface**: Intuitive CustomTkinter-based interface for easy URL input and file saving.
 - **Automatic FPS Detection**: Analyzes the source video to detect and apply the appropriate frame rate for GIF conversion.
-- **High-Quality Conversion**: Uses moviepy and FFmpeg to convert MP4 videos to GIFs with preserved quality.
+- **High-Quality Conversion**: Uses moviepy and FFmpeg to convert videos to GIFs with preserved quality.
+- **GIF Preservation**: Downloads Pinterest GIFs directly without re-encoding when possible.
 - **Cross-Platform Compatibility**: Runs on all platforms including Windows, macOS, and Linux with bundled dependencies.
 - **Error Handling and Logging**: Comprehensive logging for troubleshooting, especially in bundled executable mode.
 - **Background Processing**: Non-blocking downloads and conversions using threading for a responsive UI.
@@ -19,45 +21,41 @@ A user-friendly GUI application for downloading videos from Twitter/X posts and 
 - FFmpeg (required for video processing; install system-wide)
 - yt-dlp (for video downloading; can be installed via pip or system package manager)
 
-### Option 1: Run from Source
+### Alternative: Run from Source
 1. Clone or download the repository.
-2. Install FFmpeg:
-   - **Windows**: Download from [https://ffmpeg.org/download.html#build-windows](https://ffmpeg.org/download.html#build-windows) and add to PATH.
-   - **macOS**: `brew install ffmpeg`
-   - **Linux**: `sudo apt install ffmpeg` (Ubuntu/Debian) or equivalent for your distribution.
-3. Install yt-dlp (optional, as it's included in requirements; for system-wide: `pip install yt-dlp` or use package manager).
-4. Install required Python packages:
-   ```
-   pip install -r requirements.txt
-   ```
-5. Run the application:
-   ```
-   python twitter_downloader.py
-   ```
+2. Install FFmpeg (see prerequisites above).
+3. Install required Python packages:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4. Run the application:
+    ```bash
+    python social_media_gif_downloader.py
+    ```
 
-### Option 2: Use Pre-built Executable
-1. Download the latest release from the [Releases](https://github.com/yourusername/twitter-gif-downloader/releases) page.
-2. Extract the ZIP file.
-3. Run `twitter_downloader.exe` (Windows) or the appropriate executable for your platform.
+### Optional: Build Your Own Executable
+If you prefer a standalone executable, you can build one locally:
+
+1. Install PyInstaller: `pip install pyinstaller`
+2. Download FFmpeg and yt-dlp binaries for your platform (see CI workflow for details)
+3. Run: `pyinstaller --onefile --windowed social_media_gif_downloader.py`
+
+**Note**: Pre-built executables for Windows, macOS, and Linux are available on the [GitHub Releases page](https://github.com/ax2bboud/social_media_gif_downloader/releases).
 
 ## Usage
 
 1. Launch the application.
-2. Paste a Twitter/X post URL containing a video into the input field (e.g., `https://x.com/user/status/123456789`).
+2. Paste a social media post URL into the input field:
+   - Twitter/X: `https://x.com/user/status/123456789`
+   - Pinterest: `https://www.pinterest.com/pin/123456789/`
+   - Instagram: `https://www.instagram.com/p/{post_id}/` or `https://www.instagram.com/reel/{reel_id}/`
 3. Click "Download as GIF".
 4. Choose a save location and filename for the GIF in the dialog that appears.
-5. The application will download the video, detect its FPS, and convert it to a GIF.
+5. The application will download the media, detect its FPS (for videos), and convert it to a GIF.
 6. Monitor progress via the status messages in the interface.
 
-**Note**: Ensure the URL points to a valid Twitter/X post with video content. The tool supports various video formats and automatically selects the best quality available.
+**Note**: The tool automatically detects the platform from the URL. Pinterest GIFs are downloaded directly when available, while videos from all platforms are converted to GIF format. Instagram support is limited to videos only (posts and reels).
 
-## Screenshots
-
-![Main Interface](screenshots/main_interface.png)
-*Main application window with URL input and download button.*
-
-![Save Dialog](screenshots/save_dialog.png)
-*File save dialog for choosing GIF output location.*
 
 ## Requirements
 
@@ -88,8 +86,8 @@ Contributions are welcome! Please follow these steps:
 4. Push to the branch: `git push origin feature/your-feature-name`.
 5. Open a Pull Request.
 
-For bug reports or feature requests, please use the [Issues](https://github.com/yourusername/twitter-gif-downloader/issues) page.
+For bug reports or feature requests, please use the issues page.
 
 ---
 
-**Disclaimer**: This tool is for personal use only. Respect Twitter/X's terms of service and copyright laws when downloading content.
+**Disclaimer**: This tool is for personal use only. Respect the terms of service and copyright laws of Twitter/X, Pinterest, and Instagram when downloading content.

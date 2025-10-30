@@ -2,26 +2,32 @@ import pytest
 import platform
 import os
 from unittest.mock import patch
+from tests.conftest import is_headless
 
 
 class TestPlatformDetection:
     """Tests for platform-specific behavior."""
 
-    def test_yt_dlp_executable_windows(self):
-        """Test yt-dlp executable detection on Windows."""
+    def test_yt_dlp_executable_platform_detection(self):
+        """Test yt-dlp executable detection logic."""
+        from platforms import TwitterDownloader
+
+        # Test Windows detection
         with patch('platform.system', return_value='Windows'):
-            from twitter_downloader import App
-            app = App()
-            # Test that the method uses yt-dlp.exe on Windows
-            # This is tested indirectly through the subprocess calls
+            downloader = TwitterDownloader()
+            assert downloader.yt_dlp_executable == 'yt-dlp.exe'
 
-    def test_yt_dlp_executable_unix(self):
-        """Test yt-dlp executable detection on Unix-like systems."""
+        # Test Unix detection
         with patch('platform.system', return_value='Linux'):
-            from twitter_downloader import App
-            app = App()
-            # Test that the method uses yt-dlp on Unix
+            downloader = TwitterDownloader()
+            assert downloader.yt_dlp_executable == 'yt-dlp'
 
+        # Test macOS detection
+        with patch('platform.system', return_value='Darwin'):
+            downloader = TwitterDownloader()
+            assert downloader.yt_dlp_executable == 'yt-dlp'
+
+    @pytest.mark.skipif(is_headless(), reason="Skipping GUI test in headless environment")
     def test_ffmpeg_binary_windows(self):
         """Test FFmpeg binary path on Windows."""
         with patch('platform.system', return_value='Windows'):
@@ -29,6 +35,7 @@ class TestPlatformDetection:
             expected = "ffmpeg.exe"
             assert expected == "ffmpeg.exe"
 
+    @pytest.mark.skipif(is_headless(), reason="Skipping GUI test in headless environment")
     def test_ffmpeg_binary_unix(self):
         """Test FFmpeg binary path on Unix-like systems."""
         with patch('platform.system', return_value='Linux'):
@@ -36,6 +43,7 @@ class TestPlatformDetection:
             expected = "ffmpeg"
             assert expected == "ffmpeg"
 
+    @pytest.mark.skipif(is_headless(), reason="Skipping GUI test in headless environment")
     @patch('platform.system')
     def test_frozen_mode_ffmpeg_path(self, mock_system):
         """Test FFmpeg path setting in frozen mode."""
@@ -45,8 +53,8 @@ class TestPlatformDetection:
              patch.dict('os.environ', {}, clear=True):
             # Import after patching
             import importlib
-            import twitter_downloader
-            importlib.reload(twitter_downloader)
+            import social_media_gif_downloader
+            importlib.reload(social_media_gif_downloader)
 
             # Check that FFMPEG_BINARY is set during import
             # The environment variable should be set when the module is imported

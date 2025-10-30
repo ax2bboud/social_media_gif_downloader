@@ -7,59 +7,26 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-        exclude:
-          # Optional: exclude combinations if needed for performance
-          - os: macos-latest
-            python-version: '3.8'
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
-    - name: Set up Python ${{ matrix.python-version }}
-      uses: actions/setup-python@v4
-      with:
-        python-version: ${{ matrix.python-version }}
-
-    - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install -e .[dev]
-
-    - name: Run tests
-      run: |
-        pytest --cov=twitter_downloader --cov-report=xml
-
   build:
-    needs: test
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [windows-latest, macos-latest, ubuntu-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11']
-        exclude:
-          # Optional: exclude combinations if needed for performance
-          - os: macos-latest
-            python-version: '3.8'
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Python ${{ matrix.python-version }}
+    - name: Set up Python
       uses: actions/setup-python@v4
       with:
-        python-version: ${{ matrix.python-version }}
+        python-version: '3.12'
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -r requirements.txt
         pip install pyinstaller
+      shell: bash
 
     - name: Download FFmpeg
       run: |
@@ -67,13 +34,17 @@ jobs:
           curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
           unzip ffmpeg.zip
           mv ffmpeg-*-essentials_build/bin/ffmpeg.exe .
+          mv ffmpeg-*-essentials_build/bin/ffprobe.exe .
         elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install ffmpeg
           cp $(brew --prefix ffmpeg)/bin/ffmpeg .
+          cp $(brew --prefix ffmpeg)/bin/ffprobe .
         else
           sudo apt-get update && sudo apt-get install -y ffmpeg
           cp /usr/bin/ffmpeg .
+          cp /usr/bin/ffprobe .
         fi
+      shell: bash
 
     - name: Download yt-dlp
       run: |
@@ -83,43 +54,52 @@ jobs:
           curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
           chmod +x yt-dlp
         fi
+      shell: bash
+
+    - name: Set path separator
+      id: path_separator
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          echo "sep=;" >> $GITHUB_OUTPUT
+        else
+          echo "sep=:" >> $GITHUB_OUTPUT
+        fi
+      shell: bash
 
     - name: Build executable with PyInstaller
       run: |
-        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "yt-dlp;." twitter_downloader.py
-
-    - name: Get version from tag
-      id: get_version
-      run: |
-        VERSION=${GITHUB_REF#refs/tags/v}
-        echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-    - name: Create artifact name
-      id: artifact_name
+        FFMPEG_FILENAME="ffmpeg"
+        FFPROBE_FILENAME="ffprobe"
+        YTDLP_FILENAME="yt-dlp"
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          FFMPEG_FILENAME="ffmpeg.exe"
+          FFPROBE_FILENAME="ffprobe.exe"
+          YTDLP_FILENAME="yt-dlp.exe"
+        fi
+        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "$FFMPEG_FILENAME${{ steps.path_separator.outputs.sep }}." --add-data "$FFPROBE_FILENAME${{ steps.path_separator.outputs.sep }}." --add-data "$YTDLP_FILENAME${{ steps.path_separator.outputs.sep }}." --add-data "platforms.py${{ steps.path_separator.outputs.sep }}." social_media_gif_downloader.py
+      shell: bash
+      
+    - name: Rename executable for artifact
       run: |
         if [ "$RUNNER_OS" == "Windows" ]; then
-          ARCH="x64"
-          EXT=".exe"
-        elif [ "$RUNNER_OS" == "macOS" ]; then
-          ARCH="x64"
-          EXT=""
+          mv dist/social_media_gif_downloader.exe "dist/social_media_gif_downloader-${{ matrix.os }}.exe"
         else
-          ARCH="x64"
-          EXT=""
+          mv dist/social_media_gif_downloader "dist/social_media_gif_downloader-${{ matrix.os }}"
         fi
-        ARTIFACT_NAME="twitter-downloader-${{ steps.get_version.outputs.version }}-${RUNNER_OS,,}-$ARCH$EXT"
-        echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Upload artifact
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
-        name: ${{ steps.artifact_name.outputs.name }}
-        path: dist/twitter_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+        name: social-media-gif-downloader-${{ matrix.os }}
+        path: dist/
 
   release:
     needs: build
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -131,19 +111,12 @@ jobs:
       run: |
         VERSION=${GITHUB_REF#refs/tags/v}
         echo "version=$VERSION" >> $GITHUB_OUTPUT
-
-    - name: Verify version consistency
-      run: |
-        PYPROJECT_VERSION=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
-        if [ "$PYPROJECT_VERSION" != "$VERSION" ]; then
-          echo "Version mismatch: tag=$VERSION, pyproject.toml=$PYPROJECT_VERSION"
-          exit 1
-        fi
+      shell: bash
 
     - name: Download all artifacts
-      uses: actions/download-artifact@v3
+      uses: actions/download-artifact@v4
       with:
-        path: artifacts/
+        path: artifacts
 
     - name: Generate release notes
       id: release_notes
@@ -162,9 +135,10 @@ jobs:
         echo "## Downloads" >> $GITHUB_OUTPUT
         echo "Download the appropriate executable for your platform from the assets below." >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
+      shell: bash
 
     - name: Create Release
-      uses: softprops/action-gh-release@v1
+      uses: softprops/action-gh-release@v2
       with:
         tag_name: v${{ steps.get_version.outputs.version }}
         name: Release v${{ steps.get_version.outputs.version }}

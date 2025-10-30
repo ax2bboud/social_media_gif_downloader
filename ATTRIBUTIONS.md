@@ -1,10 +1,10 @@
 # Attributions
 
-This file provides attributions for all dependencies used in the twitter_downloader project, including license information, copyright notices, and links to original projects.
+This file provides attributions for all dependencies used in the social-media-gif-downloader project, including license information, copyright notices, and links to original projects.
 
 ## Project License
 
-**twitter_downloader** is licensed under the MIT License.
+**social-media-gif-downloader** is licensed under the MIT License.
 
 Copyright (c) 2024 ax2bboud
 
