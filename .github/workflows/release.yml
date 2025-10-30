@@ -1,32 +1,25 @@
-name: CI
+name: Release
 
 on:
   push:
-    branches: [main, master]
-  pull_request:
+    tags:
+      - 'v*.*.*'
   workflow_dispatch:
-    inputs:
-      build_executables:
-        description: 'Build executables for all platforms'
-        required: false
-        default: false
-        type: boolean
 
 jobs:
-  test:
+  build:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-        python-version: ['3.8', '3.9', '3.10', '3.11', '3.12']
+        os: [windows-latest, macos-latest, ubuntu-latest]
+        python-version: ['3.8', '3.9', '3.10', '3.11']
         exclude:
-          # Reduce matrix size for faster CI
+          # Optional: exclude combinations if needed for performance
           - os: macos-latest
             python-version: '3.8'
-          - os: macos-latest
-            python-version: '3.9'
     steps:
-    - uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
 
     - name: Set up Python ${{ matrix.python-version }}
       uses: actions/setup-python@v4
@@ -36,49 +29,17 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -e .[dev]
-      shell: bash
-
-    - name: Run tests
-      run: |
-        PYTHONPATH=$PWD pytest --cov=social_media_gif_downloader --cov-report=xml --ignore=tests/test_integration.py
-      shell: bash
-
-  build_executables:
-    if: github.event.inputs.build_executables == 'true' || (github.event_name == 'workflow_dispatch' && github.event.inputs.build_executables == 'true')
-    needs: test
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            ext: ""
-          - os: macos-latest
-            ext: ".app"
-          - os: windows-latest
-            ext: ".exe"
-    steps:
-    - uses: actions/checkout@v4
-
-    - name: Set up Python 3.11
-      uses: actions/setup-python@v4
-      with:
-        python-version: 3.11
-
-    - name: Install build dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install pyinstaller
         pip install -r requirements.txt
-      shell: bash
+        pip install pyinstaller
 
     - name: Download FFmpeg
       run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
-          choco install ffmpeg
-          cp C:/ProgramData/chocolatey/bin/ffmpeg.exe .
-          cp C:/ProgramData/chocolatey/bin/ffprobe.exe .
-        elif [ "${{ matrix.os }}" == "macos-latest" ]; then
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
+          unzip ffmpeg.zip
+          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe .
+          mv ffmpeg-*-essentials_build/bin/ffprobe.exe .
+        elif [ "$RUNNER_OS" == "macOS" ]; then
           brew install ffmpeg
           cp $(brew --prefix ffmpeg)/bin/ffmpeg .
           cp $(brew --prefix ffmpeg)/bin/ffprobe .
@@ -87,54 +48,93 @@ jobs:
           cp /usr/bin/ffmpeg .
           cp /usr/bin/ffprobe .
         fi
-      shell: bash
 
     - name: Download yt-dlp
       run: |
-        if [ "${{ matrix.os }}" == "windows-latest" ]; then
+        if [ "$RUNNER_OS" == "Windows" ]; then
           curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
         else
           curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
           chmod +x yt-dlp
         fi
-      shell: bash
-
-    - name: Generate and modify .spec file
-      run: |
-        if [ "${{ matrix.os }}" == "macos-latest" ]; then
-          pyi-makespec social_media_gif_downloader.py --name "Social Media GIF Downloader" --windowed --icon=app_icon.ico
-          sed -i '' 's/binaries=\[]/binaries=[("ffmpeg", "."), ("ffprobe", "."), ("yt-dlp", ".")]/g' "Social Media GIF Downloader.spec"
-        else
-          pyi-makespec social_media_gif_downloader.py --name social-media-gif-downloader --onefile --windowed --icon=app_icon.ico
-          if [ "${{ matrix.os }}" == "windows-latest" ]; then
-            sed -i 's/binaries=\[]/binaries=[("ffmpeg.exe", "."), ("ffprobe.exe", "."), ("yt-dlp.exe", ".")]/g' social-media-gif-downloader.spec
-          else
-            sed -i 's/binaries=\[]/binaries=[("ffmpeg", "."), ("ffprobe", "."), ("yt-dlp", ".")]/g' social-media-gif-downloader.spec
-          fi
-        fi
-      shell: bash
 
     - name: Build executable with PyInstaller
       run: |
-        if [ "${{ matrix.os }}" == "macos-latest" ]; then
-          pyinstaller "Social Media GIF Downloader.spec"
-        else
-          pyinstaller social-media-gif-downloader.spec
-        fi
-      shell: bash
+        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "ffmpeg;." --add-data "ffprobe;." --add-data "yt-dlp;." social_media_gif_downloader.py
 
-    - name: Rename executable
+    - name: Get version from pyproject.toml
+      id: get_version
       run: |
-        if [ "${{ matrix.os }}" == "macos-latest" ]; then
-          mv "dist/Social Media GIF Downloader.app" "dist/social-media-gif-downloader-${{ matrix.os }}.app" || mv "dist/social-media-gif-downloader${{ matrix.ext }}" "dist/social-media-gif-downloader-${{ matrix.os }}${{ matrix.ext }}"
-        else
-          mv dist/social-media-gif-downloader${{ matrix.ext }} "dist/social-media-gif-downloader-${{ matrix.os }}${{ matrix.ext }}"
-        fi
-      shell: bash
+        VERSION=$(grep '^version =' pyproject.toml | sed 's/version = "\(.*\)"/\1/')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
 
-    - uses: actions/upload-artifact@v4
+    - name: Create artifact name
+      id: artifact_name
+      run: |
+        if [ "$RUNNER_OS" == "Windows" ]; then
+          ARCH="x64"
+          EXT=".exe"
+        elif [ "$RUNNER_OS" == "macOS" ]; then
+          ARCH="x64"
+          EXT=""
+        else
+          ARCH="x64"
+          EXT=""
+        fi
+        ARTIFACT_NAME="social-media-gif-downloader-${{ steps.get_version.outputs.version }}-${RUNNER_OS,,}-$ARCH$EXT"
+        echo "name=$ARTIFACT_NAME" >> $GITHUB_OUTPUT
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v3
       with:
-        name: executable-${{ matrix.os }}
-        path: |
-          dist/social-media-gif-downloader-${{ matrix.os }}*
-        compression-level: 0
+        name: ${{ steps.artifact_name.outputs.name }}
+        path: dist/social_media_gif_downloader${{ matrix.os == 'windows-latest' && '.exe' || '' }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get version
+      id: get_version
+      run: |
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v3
+      with:
+        path: artifacts/
+
+    - name: Generate release notes
+      id: release_notes
+      run: |
+        # Generate release notes from commits since last tag
+        PREVIOUS_TAG=$(git describe --tags --abbrev=0 HEAD~1 2>/dev/null || echo "")
+        if [ -n "$PREVIOUS_TAG" ]; then
+          NOTES=$(git log --pretty=format:"- %s" $PREVIOUS_TAG..HEAD)
+        else
+          NOTES=$(git log --pretty=format:"- %s" --max-count=10)
+        fi
+        echo "notes<<EOF" >> $GITHUB_OUTPUT
+        echo "## Changes in v${{ steps.get_version.outputs.version }}" >> $GITHUB_OUTPUT
+        echo "$NOTES" >> $GITHUB_OUTPUT
+        echo "" >> $GITHUB_OUTPUT
+        echo "## Downloads" >> $GITHUB_OUTPUT
+        echo "Download the appropriate executable for your platform from the assets below." >> $GITHUB_OUTPUT
+        echo "EOF" >> $GITHUB_OUTPUT
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: v${{ steps.get_version.outputs.version }}
+        name: Release v${{ steps.get_version.outputs.version }}
+        body: ${{ steps.release_notes.outputs.notes }}
+        files: artifacts/**/*
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
