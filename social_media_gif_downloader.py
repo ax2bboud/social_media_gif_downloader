@@ -12,7 +12,7 @@ This project uses the following third-party libraries:
 For full attributions and license texts, see ATTRIBUTIONS.md.
 """
 
-__version__ = "1.1.0"
+__version__ = "1.0.1"
 
 import sys
 import os
@@ -71,6 +71,7 @@ from platforms import get_platform_downloader, TwitterDownloader, PinterestDownl
 # --- Constants ---
 TEMP_VIDEO_FILE = "temp_video.mp4"
 DEFAULT_GIF_FPS = 15  # Fallback if FPS detection fails
+
 
 class App(ctk.CTk):
     def __init__(self):
@@ -137,7 +138,7 @@ class App(ctk.CTk):
         Detects the social media platform from the URL.
         Returns: 'twitter', 'pinterest', 'instagram', or 'unknown'
         """
-        downloader = get_platform_downloader(url)
+        downloader = get_platform_downloader(url, TEMP_VIDEO_FILE)
         if downloader:
             if isinstance(downloader, TwitterDownloader):
                 return 'twitter'
@@ -151,7 +152,7 @@ class App(ctk.CTk):
         """
         Parses the post/pin ID from the URL to use as a filename.
         """
-        downloader = get_platform_downloader(url)
+        downloader = get_platform_downloader(url, TEMP_VIDEO_FILE)
         return downloader.get_id_from_url(url) if downloader else "social_media_post"
 
     def start_download_thread(self, convert_to_gif: bool = True) -> None:
@@ -163,7 +164,7 @@ class App(ctk.CTk):
             self.update_status("Error: Please paste a URL first.", "red")
             return
 
-        downloader = get_platform_downloader(url)
+        downloader = get_platform_downloader(url, TEMP_VIDEO_FILE)
         if not downloader:
             self.update_status("Error: Unsupported platform. Please use Twitter/X, Pinterest, or Instagram URLs.", "red")
             return

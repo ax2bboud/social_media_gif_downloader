@@ -228,12 +228,12 @@ class InstagramDownloader(PlatformDownloader):
         return match.group(1) if match else "instagram_post"
 
 
-def get_platform_downloader(url: str) -> Optional[PlatformDownloader]:
+def get_platform_downloader(url: str, temp_file: str) -> Optional[PlatformDownloader]:
     """Factory function to get the appropriate downloader for a URL."""
     downloaders = [
-        TwitterDownloader(),
-        PinterestDownloader(),
-        InstagramDownloader()
+        TwitterDownloader(temp_file=temp_file),
+        PinterestDownloader(temp_file=temp_file),
+        InstagramDownloader(temp_file=temp_file)
     ]
 
     for downloader in downloaders:
