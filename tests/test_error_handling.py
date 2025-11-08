@@ -39,14 +39,14 @@ class TestErrorHandling:
         from platforms import get_platform_downloader
 
         # Test with empty URL
-        downloader = get_platform_downloader("")
+        downloader = get_platform_downloader("", temp_file="dummy.mp4")
         assert downloader is None
 
         # Test with invalid URL
-        downloader = get_platform_downloader("not-a-url")
+        downloader = get_platform_downloader("not-a-url", temp_file="dummy.mp4")
         assert downloader is None
 
         # Test with valid Twitter URL
-        downloader = get_platform_downloader("https://x.com/user/status/123")
+        downloader = get_platform_downloader("https://x.com/user/status/123", temp_file="dummy.mp4")
         assert downloader is not None
         assert downloader.__class__.__name__ == "TwitterDownloader"
