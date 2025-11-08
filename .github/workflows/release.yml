@@ -8,10 +8,7 @@ on:
 
 jobs:
   build:
-    runs-on: ${{ matrix.os }}
-    strategy:
-      matrix:
-        os: [windows-latest, macos-latest, ubuntu-latest]
+    runs-on: ubuntu-latest # Build on a single platform is sufficient for sdist/wheel
     steps:
     - name: Checkout code
       uses: actions/checkout@v4
@@ -24,76 +21,19 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pyinstaller
+        pip install build
       shell: bash
 
-    - name: Download FFmpeg
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          curl -L https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip -o ffmpeg.zip
-          unzip ffmpeg.zip
-          mv ffmpeg-*-essentials_build/bin/ffmpeg.exe .
-          mv ffmpeg-*-essentials_build/bin/ffprobe.exe .
-        elif [ "$RUNNER_OS" == "macOS" ]; then
-          brew install ffmpeg
-          cp $(brew --prefix ffmpeg)/bin/ffmpeg .
-          cp $(brew --prefix ffmpeg)/bin/ffprobe .
-        else
-          sudo apt-get update && sudo apt-get install -y ffmpeg
-          cp /usr/bin/ffmpeg .
-          cp /usr/bin/ffprobe .
-        fi
-      shell: bash
-
-    - name: Download yt-dlp
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp.exe -o yt-dlp.exe
-        else
-          curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o yt-dlp
-          chmod +x yt-dlp
-        fi
-      shell: bash
-
-    - name: Set path separator
-      id: path_separator
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          echo "sep=;" >> $GITHUB_OUTPUT
-        else
-          echo "sep=:" >> $GITHUB_OUTPUT
-        fi
-      shell: bash
-
-    - name: Build executable with PyInstaller
-      run: |
-        FFMPEG_FILENAME="ffmpeg"
-        FFPROBE_FILENAME="ffprobe"
-        YTDLP_FILENAME="yt-dlp"
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          FFMPEG_FILENAME="ffmpeg.exe"
-          FFPROBE_FILENAME="ffprobe.exe"
-          YTDLP_FILENAME="yt-dlp.exe"
-        fi
-        pyinstaller --onefile --windowed --icon=app_icon.ico --add-data "$FFMPEG_FILENAME${{ steps.path_separator.outputs.sep }}." --add-data "$FFPROBE_FILENAME${{ steps.path_separator.outputs.sep }}." --add-data "$YTDLP_FILENAME${{ steps.path_separator.outputs.sep }}." --add-data "platforms.py${{ steps.path_separator.outputs.sep }}." social_media_gif_downloader.py
-      shell: bash
-      
-    - name: Rename executable for artifact
-      run: |
-        if [ "$RUNNER_OS" == "Windows" ]; then
-          mv dist/social_media_gif_downloader.exe "dist/social_media_gif_downloader-${{ matrix.os }}.exe"
-        else
-          mv dist/social_media_gif_downloader "dist/social_media_gif_downloader-${{ matrix.os }}"
-        fi
+    - name: Build sdist and wheel
+      run: python -m build
       shell: bash
 
     - name: Upload artifact
       uses: actions/upload-artifact@v4
       with:
-        name: social-media-gif-downloader-${{ matrix.os }}
+        name: python-package
         path: dist/
-
+  
   release:
     needs: build
     runs-on: ubuntu-latest
@@ -113,10 +53,11 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
       shell: bash
 
-    - name: Download all artifacts
+    - name: Download artifact
       uses: actions/download-artifact@v4
       with:
-        path: artifacts
+        name: python-package
+        path: dist
 
     - name: Generate release notes
       id: release_notes
@@ -133,7 +74,7 @@ jobs:
         echo "$NOTES" >> $GITHUB_OUTPUT
         echo "" >> $GITHUB_OUTPUT
         echo "## Downloads" >> $GITHUB_OUTPUT
-        echo "Download the appropriate executable for your platform from the assets below." >> $GITHUB_OUTPUT
+        echo "Download the source code or wheel from the assets below." >> $GITHUB_OUTPUT
         echo "EOF" >> $GITHUB_OUTPUT
       shell: bash
 
@@ -143,6 +84,9 @@ jobs:
         tag_name: v${{ steps.get_version.outputs.version }}
         name: Release v${{ steps.get_version.outputs.version }}
         body: ${{ steps.release_notes.outputs.notes }}
-        files: artifacts/**/*
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        files: dist/*
+        
+    - name: Publish to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        password: ${{ secrets.PYPI_API_TOKEN }}

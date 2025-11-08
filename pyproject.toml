@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "social-media-gif-downloader"
-version = "1.0.1"
-description = "A GUI application to download videos/GIFs from Twitter/X, Pinterest, and Instagram and convert them to GIFs"
+version = "1.0.2"
+description = "A GUI to download videos/GIFs from social media."
 authors = [
     {name = "ax2bboud", email = "contact@ax2bboud.com"},
 ]
@@ -33,6 +33,9 @@ Homepage = "https://github.com/ax2bboud/social-media-gif-downloader"
 Repository = "https://github.com/ax2bboud/social-media-gif-downloader"
 Issues = "https://github.com/ax2bboud/social-media-gif-downloader/issues"
 
+
+[project.scripts]
+social-media-gif-downloader = "social_media_gif_downloader:main"
 
 [project.optional-dependencies]
 dev = [

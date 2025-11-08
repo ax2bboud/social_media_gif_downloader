@@ -16,31 +16,21 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
 
 ## Installation
 
-### Prerequisites
-- Python 3.8 or higher
-- FFmpeg (required for video processing; install system-wide)
-- yt-dlp (for video downloading; can be installed via pip or system package manager)
-
-### Alternative: Run from Source
-1. Clone or download the repository.
-2. Install FFmpeg (see prerequisites above).
-3. Install required Python packages:
+1.  **Install Python**: Ensure you have Python 3.8 or higher installed. You can download it from [python.org](https://www.python.org/).
+2.  **Install FFmpeg**: This is required for video processing.
+    -   **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add the `bin` directory to your system's PATH.
+    -   **macOS**: `brew install ffmpeg`
+    -   **Linux**: `sudo apt-get install ffmpeg` (or use your distribution's package manager).
+3.  **Install the Application**:
     ```bash
-    pip install -r requirements.txt
+    pip install social-media-gif-downloader
     ```
-4. Run the application:
+4.  **Run the Application**:
     ```bash
-    python social_media_gif_downloader.py
+    social-media-gif-downloader
     ```
 
-### Optional: Build Your Own Executable
-If you prefer a standalone executable, you can build one locally:
-
-1. Install PyInstaller: `pip install pyinstaller`
-2. Download FFmpeg and yt-dlp binaries for your platform (see CI workflow for details)
-3. Run: `pyinstaller --onefile --windowed social_media_gif_downloader.py`
-
-**Note**: Pre-built executables for Windows, macOS, and Linux are available on the [GitHub Releases page](https://github.com/ax2bboud/social_media_gif_downloader/releases).
+That's it! The application should launch.
 
 ## Usage
 
@@ -57,16 +47,13 @@ If you prefer a standalone executable, you can build one locally:
 **Note**: The tool automatically detects the platform from the URL. Pinterest GIFs are downloaded directly when available, while videos from all platforms are converted to GIF format. Instagram support is limited to videos only (posts and reels).
 
 
-## Requirements
+## Entry Point
 
-- **Python Libraries**:
-  - `customtkinter` (for GUI)
-  - `moviepy` (for video processing)
-  - `yt-dlp` (for video downloading)
-- **System Dependencies**:
-  - FFmpeg (required for video processing; install from [https://ffmpeg.org/download.html](https://ffmpeg.org/download.html) or via package manager)
-  - yt-dlp (included in Python requirements; system installation optional)
-- **Operating System**: Windows 10+, macOS 10.14+, or Linux with Python support.
+This package installs a command-line entry point. After installation, you can run the application from your terminal by simply typing:
+
+```bash
+social-media-gif-downloader
+```
 
 ## License
 

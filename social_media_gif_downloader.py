@@ -12,7 +12,7 @@ This project uses the following third-party libraries:
 For full attributions and license texts, see ATTRIBUTIONS.md.
 """
 
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 import sys
 import os
@@ -20,6 +20,7 @@ import re  # For parsing the URL
 import json  # For reading video metadata
 import logging
 import platform
+import tempfile
 from typing import Optional, Any
 
 # Configure logging
@@ -69,7 +70,10 @@ from platforms import get_platform_downloader, TwitterDownloader, PinterestDownl
 
 
 # --- Constants ---
-TEMP_VIDEO_FILE = "temp_video.mp4"
+if getattr(sys, 'frozen', False):
+    TEMP_VIDEO_FILE = os.path.join(tempfile.gettempdir(), "temp_video.mp4")
+else:
+    TEMP_VIDEO_FILE = "temp_video.mp4"
 DEFAULT_GIF_FPS = 15  # Fallback if FPS detection fails
 
 
