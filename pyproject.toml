@@ -4,10 +4,10 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "social-media-gif-downloader"
-version = "1.0.2"
+version = "1.0.3"
 description = "A GUI to download videos/GIFs from social media."
 authors = [
-    {name = "ax2bboud", email = "contact@ax2bboud.com"},
+    {name = "ax2bboud"},
 ]
 readme = "README.md"
 requires-python = ">=3.8"
