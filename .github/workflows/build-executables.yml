@@ -141,10 +141,12 @@ jobs:
         Terminal=false
         EOF
         
-        # Copy icon if exists, otherwise create a symlink to the desktop file
+        # Copy icon if exists, otherwise create a placeholder icon
         if [ -f app_icon.ico ]; then
           cp app_icon.ico AppDir/usr/share/icons/hicolor/256x256/apps/social-media-gif-downloader.png || true
         fi
+        # Always create a minimal placeholder icon file in AppDir root (1x1 transparent PNG)
+        echo -e '\x89PNG\r\n\x1a\n\x00\x00\x00\rIHDR\x00\x00\x00\x01\x00\x00\x00\x01\x08\x06\x00\x00\x00\x1f\x15\xc4\x89\x00\x00\x00\nIDATx\x9cc\x00\x01\x00\x00\x05\x00\x01\r\n-\xdb\x00\x00\x00\x00IEND\xaeB`\x82' > AppDir/social-media-gif-downloader.png
         
         # Create AppRun
         cat > AppDir/AppRun << 'EOF'
@@ -161,7 +163,7 @@ jobs:
 
     - name: Build AppImage
       run: |
-        ./appimagetool-x86_64.AppImage AppDir SocialMediaGIFDownloader-Linux-x86_64.AppImage
+        ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir SocialMediaGIFDownloader-Linux-x86_64.AppImage
 
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
