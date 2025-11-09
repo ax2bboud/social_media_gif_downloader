@@ -1,3 +1,6 @@
+# AGENTS.md
+
+## Setup
 # Agent Development Guide
 
 ## Commands
@@ -9,36 +12,26 @@ python -m venv .venv
 pip install -e .[dev]
 ```
 
-### Build
-```bash
-pip install -e .
-```
-
-### Tests
-```bash
-pytest --cov=social_media_gif_downloader --cov-report=xml --ignore=tests/test_integration.py
-```
-
-### Run Application
-```bash
-python social_media_gif_downloader.py
-```
+## Commands
+- **Build**: `python -m build`
+- **Test**: `pytest --cov=social_media_gif_downloader --cov-report=xml --ignore=tests/test_integration.py`
+- **Lint**: No linter configured
+- **Dev Server**: `python social_media_gif_downloader.py` (launches GUI)
 
 ## Tech Stack
-- **Language**: Python 3.8+ (supports 3.8-3.12)
-- **GUI**: CustomTkinter (modern tkinter wrapper)
-- **Video Processing**: MoviePy + FFmpeg
-- **Downloading**: yt-dlp
-- **Testing**: pytest, pytest-mock, pytest-cov, pytest-xdist
+- **Language**: Python 3.8+
+- **GUI**: CustomTkinter
+- **Video Processing**: MoviePy, FFmpeg
+- **Downloader**: yt-dlp
+- **Testing**: pytest, pytest-mock, pytest-cov
+- **Build**: setuptools
 
 ## Architecture
-- `social_media_gif_downloader.py`: Main GUI application with CustomTkinter interface and threading for background downloads
+- `social_media_gif_downloader.py`: Main GUI app with threading for non-blocking downloads
 - `platforms.py`: Abstract base class `PlatformDownloader` with platform-specific implementations (Twitter, Pinterest, Instagram)
-- `tests/`: pytest-based test suite with fixtures, platform detection, URL parsing, and error handling tests
+- Entry point: `social-media-gif-downloader` command after installation
 
 ## Code Style
-- No linting tool configured; follow existing conventions in codebase
-- Use type hints from `typing` module
-- Logging via Python's `logging` module (file-based when frozen, console otherwise)
-- Thread-safe GUI updates via `after()` for cross-thread communication
-- Abstract base classes for platform extensibility
+- No explicit linter/formatter configured
+- Follow existing conventions: type hints, docstrings for public methods, logging for errors
+- Use abstract base classes for platform extensibility
