@@ -67,7 +67,7 @@ class PlatformDownloader(ABC):
         default_name = self.get_id_from_url(url)
         return video_fps, default_name
 
-    def download_media(self, url: str, output_file: str, progress_callback=None, skip_conversion=False) -> bool:
+    def download_media(self, url: str, output_file: str, progress_callback=None, skip_conversion=False, fps: int = 15) -> bool:
         """
         Download media from the platform.
         Returns True if successful, False otherwise.
@@ -122,13 +122,13 @@ class PlatformDownloader(ABC):
                 return True
 
             # Convert video to GIF
-            return self.convert_to_gif(self.temp_file, output_file, progress_callback)
+            return self.convert_to_gif(self.temp_file, output_file, progress_callback, fps)
 
         except Exception as e:
             logging.error(f"Download error: {e}")
             return False
 
-    def convert_to_gif(self, input_file: str, output_file: str, progress_callback=None) -> bool:
+    def convert_to_gif(self, input_file: str, output_file: str, progress_callback=None, fps: int = 15) -> bool:
         """Convert video file to GIF format."""
         try:
             from moviepy.video.io.VideoFileClip import VideoFileClip
@@ -151,8 +151,8 @@ class PlatformDownloader(ABC):
                 logging.warning("Could not import moviepy logger, proceeding without logger management")
 
             try:
-                clip.write_gif(output_file, fps=15, logger=None)  # Default 15 FPS
-                logging.info("write_gif completed")
+                clip.write_gif(output_file, fps=fps, logger=None)
+                logging.info(f"write_gif completed at {fps} FPS")
                 return True
             finally:
                 # Restore original logger if it was successfully imported
