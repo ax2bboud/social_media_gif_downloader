@@ -1,6 +1,3 @@
-__version__ = "1.1.1"
+__version__ = "1.0.3"
 
-try:
-    from .social_media_gif_downloader import App
-except ImportError:
-    pass
+from .social_media_gif_downloader import App, main

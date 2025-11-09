@@ -22,8 +22,6 @@ wheels/
 MANIFEST
 
 # PyInstaller
-*.spec
-*.exe
 *.log
 
 # IDE
@@ -79,3 +77,6 @@ logs/
 
 # Additional OS files
 desktop.ini
+
+# Executables
+*.exe

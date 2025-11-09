@@ -20,6 +20,18 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
 
 ## Installation
 
+### Option 1: Download Pre-built Executables (Recommended for End Users)
+
+Download the latest release for your platform from the [Releases](https://github.com/ax2bboud/social-media-gif-downloader/releases) page:
+
+- **Windows**: Download `SocialMediaGIFDownloader-Windows-x64.zip`, extract, and run the `.exe` file
+- **macOS**: Download `.dmg` or `.zip`, open/extract, and drag to Applications folder
+- **Linux**: Download `.AppImage`, make it executable (`chmod +x SocialMediaGIFDownloader-Linux-x86_64.AppImage`), and run
+
+No Python or FFmpeg installation required - all dependencies are bundled!
+
+### Option 2: Install from PyPI
+
 1.  **Install Python**: Ensure you have Python 3.8 or higher installed. You can download it from [python.org](https://www.python.org/).
 2.  **Install FFmpeg**: This is required for video processing.
     -   **Windows**: Download from [ffmpeg.org](https://ffmpeg.org/download.html) and add the `bin` directory to your system's PATH.
@@ -33,8 +45,6 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
     ```bash
     social-media-gif-downloader
     ```
-
-That's it! The application should launch.
 
 ## Usage
 

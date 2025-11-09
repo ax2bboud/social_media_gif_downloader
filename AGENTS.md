@@ -1,35 +1,44 @@
-# AGENTS.md
+# Agent Development Guide
 
 ## Commands
 
-**Initial Setup:**
+### Initial Setup
 ```bash
 python -m venv .venv
 .venv\Scripts\activate  # Windows
-# source .venv/bin/activate  # macOS/Linux
 pip install -e .[dev]
 ```
 
-**Build:** `python -m build`
+### Build
+```bash
+pip install -e .
+```
 
-**Lint:** N/A (no linter configured)
+### Tests
+```bash
+pytest --cov=social_media_gif_downloader --cov-report=xml --ignore=tests/test_integration.py
+```
 
-**Tests:** `pytest --cov=social_media_gif_downloader`
+### Run Application
+```bash
+python social_media_gif_downloader.py
+```
 
-**Dev Server:** `python social_media_gif_downloader.py`
+## Tech Stack
+- **Language**: Python 3.8+ (supports 3.8-3.12)
+- **GUI**: CustomTkinter (modern tkinter wrapper)
+- **Video Processing**: MoviePy + FFmpeg
+- **Downloading**: yt-dlp
+- **Testing**: pytest, pytest-mock, pytest-cov, pytest-xdist
 
-## Tech Stack & Architecture
-
-- **Language:** Python 3.8+
-- **GUI:** CustomTkinter
-- **Video Processing:** moviepy, FFmpeg
-- **Downloader:** yt-dlp
-- **Testing:** pytest, pytest-cov, pytest-mock
-- **Structure:** Modular platform-specific downloaders (`platforms.py`) with abstract base class pattern; main GUI in `social_media_gif_downloader.py`
+## Architecture
+- `social_media_gif_downloader.py`: Main GUI application with CustomTkinter interface and threading for background downloads
+- `platforms.py`: Abstract base class `PlatformDownloader` with platform-specific implementations (Twitter, Pinterest, Instagram)
+- `tests/`: pytest-based test suite with fixtures, platform detection, URL parsing, and error handling tests
 
 ## Code Style
-
-- No comments unless complex logic requires context
-- Follow existing patterns in `platforms.py` for new platform support
-- Threading for background processing to keep UI responsive
-- Comprehensive logging for error handling
+- No linting tool configured; follow existing conventions in codebase
+- Use type hints from `typing` module
+- Logging via Python's `logging` module (file-based when frozen, console otherwise)
+- Thread-safe GUI updates via `after()` for cross-thread communication
+- Abstract base classes for platform extensibility
