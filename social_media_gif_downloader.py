@@ -12,7 +12,7 @@ This project uses the following third-party libraries:
 For full attributions and license texts, see ATTRIBUTIONS.md.
 """
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 import sys
 import os
