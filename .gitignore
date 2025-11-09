@@ -77,3 +77,6 @@ logs/
 
 # Additional OS files
 desktop.ini
+
+# Executables
+*.exe
