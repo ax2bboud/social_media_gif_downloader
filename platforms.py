@@ -290,7 +290,7 @@ class PlatformDownloader(ABC):
                 f"• Error: {str(e)[:100]}"
             )
 
-    def convert_to_gif(self, input_file: str, output_file: str, progress_callback=None) -> bool:
+    def convert_to_gif(self, input_file: str, output_file: str, progress_callback=None, fps: int = 15) -> bool:
         """
         Convert video file to GIF format.
         

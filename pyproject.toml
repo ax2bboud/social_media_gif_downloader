@@ -26,6 +26,8 @@ classifiers = [
 dependencies = [
     "moviepy>=1.0.0",
     "customtkinter>=5.0.0",
+    "yt-dlp",
+    "imageio-ffmpeg",
 ]
 
 [project.urls]

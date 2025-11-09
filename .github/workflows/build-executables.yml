@@ -23,9 +23,55 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
         pip install pyinstaller
+        pip install imageio-ffmpeg
+
+    - name: Download and bundle ffmpeg
+      run: |
+        # Create a temporary directory for ffmpeg download
+        New-Item -ItemType Directory -Force -Path ffmpeg_temp
+        
+        # Download ffmpeg-essentials for Windows
+        $ffmpegUrl = "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip"
+        Invoke-WebRequest -Uri $ffmpegUrl -OutFile ffmpeg_temp/ffmpeg.zip
+        
+        # Extract ffmpeg
+        Expand-Archive -Path ffmpeg_temp/ffmpeg.zip -DestinationPath ffmpeg_temp
+        
+        # Find and copy the ffmpeg.exe binary to the root directory
+        $ffmpegExe = Get-ChildItem -Path ffmpeg_temp -Filter ffmpeg.exe -Recurse | Select-Object -First 1
+        if ($ffmpegExe) {
+          Copy-Item $ffmpegExe.FullName -Destination ffmpeg.exe
+          Write-Host "FFmpeg copied to: $(Get-Location)\ffmpeg.exe"
+        } else {
+          Write-Error "ffmpeg.exe not found after extraction"
+          exit 1
+        }
+        
+        # Clean up temp directory
+        Remove-Item -Recurse -Force ffmpeg_temp
+
+    - name: Verify ffmpeg
+      run: |
+        if (Test-Path ffmpeg.exe) {
+          Write-Host "FFmpeg found: $(Get-Item ffmpeg.exe)"
+          .\ffmpeg.exe -version
+        } else {
+          Write-Error "ffmpeg.exe not found"
+          exit 1
+        }
 
     - name: Build Windows executable
       run: pyinstaller social_media_gif_downloader.spec
+
+    - name: Verify executable exists
+      run: |
+        if (Test-Path dist\SocialMediaGIFDownloader.exe) {
+          Write-Host "Executable built successfully"
+          Get-Item dist\SocialMediaGIFDownloader.exe
+        } else {
+          Write-Error "Executable not found"
+          exit 1
+        }
 
     - name: Prepare Windows artifact
       run: |
@@ -53,10 +99,44 @@ jobs:
         python -m pip install --upgrade pip
         pip install -e .
         pip install pyinstaller
+        pip install imageio-ffmpeg
         brew install create-dmg
+
+    - name: Download and bundle ffmpeg
+      run: |
+        # Create a temporary directory for ffmpeg download
+        mkdir -p ffmpeg_temp
+        
+        # Download ffmpeg for macOS
+        curl -L https://evermeet.cx/ffmpeg/getrelease/ffmpeg/zip -o ffmpeg_temp/ffmpeg.zip
+        
+        # Extract ffmpeg
+        cd ffmpeg_temp
+        unzip ffmpeg.zip
+        cd ..
+        
+        # Copy ffmpeg binary to root
+        cp ffmpeg_temp/ffmpeg ffmpeg
+        chmod +x ffmpeg
+        
+        # Verify
+        ./ffmpeg -version
+        
+        # Clean up temp directory
+        rm -rf ffmpeg_temp
 
     - name: Build macOS app
       run: pyinstaller social_media_gif_downloader.spec
+
+    - name: Verify app bundle
+      run: |
+        if [ -d "dist/SocialMediaGIFDownloader.app" ]; then
+          echo "App bundle created successfully"
+          ls -la dist/SocialMediaGIFDownloader.app/Contents/MacOS/
+        else
+          echo "App bundle not found"
+          exit 1
+        fi
 
     - name: Create DMG
       run: |
@@ -106,16 +186,51 @@ jobs:
           file \
           wget \
           desktop-file-utils \
-          zsync
+          zsync \
+          python3-tk
 
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
         pip install -e .
         pip install pyinstaller
+        pip install imageio-ffmpeg
+
+    - name: Download and bundle ffmpeg
+      run: |
+        # Create a temporary directory for ffmpeg download
+        mkdir -p ffmpeg_temp
+        
+        # Download ffmpeg static build for Linux
+        wget https://johnvansickle.com/ffmpeg/releases/ffmpeg-release-amd64-static.tar.xz -O ffmpeg_temp/ffmpeg.tar.xz
+        
+        # Extract ffmpeg
+        cd ffmpeg_temp
+        tar -xf ffmpeg.tar.xz
+        cd ..
+        
+        # Find and copy the ffmpeg binary
+        find ffmpeg_temp -name ffmpeg -type f -executable -exec cp {} ffmpeg \;
+        chmod +x ffmpeg
+        
+        # Verify
+        ./ffmpeg -version
+        
+        # Clean up temp directory
+        rm -rf ffmpeg_temp
 
     - name: Build Linux executable
       run: pyinstaller social_media_gif_downloader.spec
+
+    - name: Verify executable exists
+      run: |
+        if [ -f "dist/SocialMediaGIFDownloader" ]; then
+          echo "Executable built successfully"
+          ls -lh dist/SocialMediaGIFDownloader
+        else
+          echo "Executable not found"
+          exit 1
+        fi
 
     - name: Download appimagetool
       run: |
@@ -227,6 +342,16 @@ jobs:
           echo "- Windows 10 or later (64-bit)"
           echo "- macOS 10.15 (Catalina) or later"
           echo "- Linux (x86_64) with FUSE support"
+          echo ""
+          echo "## What's Included"
+          echo ""
+          echo "All executables are standalone and include:"
+          echo "- Python runtime"
+          echo "- FFmpeg for video processing"
+          echo "- yt-dlp for downloading"
+          echo "- All required dependencies"
+          echo ""
+          echo "No additional software installation required!"
           echo "EOF"
         } >> $GITHUB_OUTPUT
 

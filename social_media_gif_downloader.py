@@ -41,7 +41,7 @@ else:
 
 # --- PYINSTALLER FFMPEG FIX ---
 # This block must be at the VERY TOP, before moviepy is imported.
-# It tells the script where to find ffmpeg.exe when it's bundled.
+# It tells the script where to find ffmpeg when it's bundled.
 if getattr(sys, 'frozen', False):
     if hasattr(sys, '_MEIPASS'):
         # This is the temporary path PyInstaller creates
@@ -50,11 +50,28 @@ if getattr(sys, 'frozen', False):
         # Fallback for some environments
         base_path = os.path.dirname(sys.executable)
 
-    # Set the environment variable for moviepy
+    # Set the environment variable for moviepy and imageio
     ffmpeg_binary = "ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg"
     ffmpeg_path = os.path.join(base_path, ffmpeg_binary)
-    os.environ["FFMPEG_BINARY"] = ffmpeg_path
-    logging.info(f"Frozen mode: FFMPEG_BINARY set to {ffmpeg_path}")
+    
+    # Check if ffmpeg exists in the bundle
+    if os.path.exists(ffmpeg_path):
+        os.environ["FFMPEG_BINARY"] = ffmpeg_path
+        os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_path
+        logging.info(f"Frozen mode: FFMPEG_BINARY set to {ffmpeg_path}")
+    else:
+        # Try to use imageio-ffmpeg as fallback
+        try:
+            import imageio_ffmpeg
+            ffmpeg_fallback = imageio_ffmpeg.get_ffmpeg_exe()
+            if ffmpeg_fallback and os.path.exists(ffmpeg_fallback):
+                os.environ["FFMPEG_BINARY"] = ffmpeg_fallback
+                os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_fallback
+                logging.info(f"Frozen mode: Using imageio-ffmpeg at {ffmpeg_fallback}")
+            else:
+                logging.warning("FFmpeg not found in bundle or imageio-ffmpeg")
+        except ImportError:
+            logging.warning("FFmpeg not found in bundle and imageio-ffmpeg not available")
 else:
     logging.info("Running in non-frozen mode")
 # --- END OF FIX ---

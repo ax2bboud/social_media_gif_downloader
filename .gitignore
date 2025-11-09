@@ -78,5 +78,19 @@ logs/
 # Additional OS files
 desktop.ini
 
-# Executables
-*.exe
+# Executables (in general)
+# *.exe
+
+# PyInstaller build artifacts
+build/
+dist/
+*.spec.backup
+
+# FFmpeg binaries (downloaded during build)
+ffmpeg
+ffmpeg.exe
+ffmpeg_temp/
+
+# Verification scripts
+verify_config.py
+test_build.py
