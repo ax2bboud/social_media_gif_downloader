@@ -67,6 +67,7 @@ import tkinter.filedialog as filedialog
 import threading
 import subprocess
 from platforms import get_platform_downloader, TwitterDownloader, PinterestDownloader, InstagramDownloader
+from config import Config
 
 
 # --- Constants ---
@@ -81,14 +82,17 @@ class App(ctk.CTk):
     def __init__(self):
         super().__init__()
 
+        # --- Configuration ---
+        self.config = Config()
+
         # --- Window Setup ---
         self.title("Social Media GIF Downloader")
-        self.geometry("600x350")
+        self.geometry("600x450")
         ctk.set_appearance_mode("System")
 
         # --- Widgets ---
         self.grid_columnconfigure(0, weight=1)
-        self.grid_rowconfigure(4, weight=1)
+        self.grid_rowconfigure(5, weight=1)
 
         # URL Entry
         self.url_label = ctk.CTkLabel(self, text="Paste Social Media Post URL:")
@@ -97,9 +101,42 @@ class App(ctk.CTk):
         self.url_entry = ctk.CTkEntry(self, placeholder_text="https://x.com/user/status/123... or https://pinterest.com/pin/123... or https://instagram.com/p/... or /reel/...")
         self.url_entry.grid(row=1, column=0, padx=20, pady=5, sticky="ew")
 
+        # Settings Frame
+        self.settings_frame = ctk.CTkFrame(self)
+        self.settings_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.settings_frame.grid_columnconfigure((0, 1, 2), weight=1)
+
+        # Default Save Location
+        self.save_location_button = ctk.CTkButton(
+            self.settings_frame, text="Set Default Save Location",
+            command=self.set_default_save_location, width=150
+        )
+        self.save_location_button.grid(row=0, column=0, padx=5, pady=5, sticky="ew")
+
+        # Preferred Output Format
+        self.format_var = ctk.StringVar(value=self.config.get_preferred_output_format())
+        self.format_menu = ctk.CTkOptionMenu(
+            self.settings_frame, variable=self.format_var,
+            values=["gif", "mp4"],
+            command=self.on_format_change
+        )
+        self.format_menu.grid(row=0, column=1, padx=5, pady=5, sticky="ew")
+
+        # FPS Settings
+        self.fps_label = ctk.CTkLabel(self.settings_frame, text=f"FPS: {self.config.get_fps_settings()}")
+        self.fps_label.grid(row=0, column=2, padx=5, pady=5, sticky="w")
+        
+        self.fps_slider = ctk.CTkSlider(
+            self.settings_frame, from_=1, to=60,
+            number_of_steps=59,
+            command=self.on_fps_change
+        )
+        self.fps_slider.set(self.config.get_fps_settings())
+        self.fps_slider.grid(row=1, column=0, columnspan=3, padx=5, pady=5, sticky="ew")
+
         # Button Frame
         self.button_frame = ctk.CTkFrame(self)
-        self.button_frame.grid(row=2, column=0, padx=20, pady=10, sticky="ew")
+        self.button_frame.grid(row=3, column=0, padx=20, pady=10, sticky="ew")
         self.button_frame.grid_columnconfigure((0, 1), weight=1)
 
         # Download Buttons
@@ -117,8 +154,17 @@ class App(ctk.CTk):
 
         # Progress Bar
         self.progress_bar = ctk.CTkProgressBar(self, width=400, height=15)
-        self.progress_bar.grid(row=3, column=0, padx=20, pady=(5, 10), sticky="ew")
+        self.progress_bar.grid(row=4, column=0, padx=20, pady=(5, 10), sticky="ew")
         self.progress_bar.set(0)  # Start at 0%
+
+        # Status Label
+        self.status_label = ctk.CTkLabel(
+            self,
+            text="",
+            wraplength=550,
+            justify="left"
+        )
+        self.status_label.grid(row=5, column=0, padx=20, pady=(10, 5), sticky="ew")
 
         # Supported platforms info
         self.platforms_label = ctk.CTkLabel(
@@ -126,16 +172,32 @@ class App(ctk.CTk):
             text="Supports: Twitter/X, Pinterest, Instagram (videos only)",
             font=("", 10)
         )
-        self.platforms_label.grid(row=5, column=0, padx=20, pady=(5, 20), sticky="w")
+        self.platforms_label.grid(row=6, column=0, padx=20, pady=(5, 20), sticky="w")
 
-        # Status Label
-        self.status_label = ctk.CTkLabel(
-            self,
-            text="",
-            wraplength=550,  # Wrap text at 550 pixels for better readability
-            justify="left"
+    def set_default_save_location(self):
+        """Set the default save location."""
+        current_location = self.config.get_default_save_location()
+        initial_dir = current_location if current_location and os.path.exists(current_location) else os.path.expanduser("~")
+        
+        directory = filedialog.askdirectory(
+            title="Select Default Save Location",
+            initialdir=initial_dir
         )
-        self.status_label.grid(row=4, column=0, padx=20, pady=(10, 5), sticky="ew")
+        
+        if directory:
+            self.config.set_default_save_location(directory)
+            self.update_status(f"Default save location set to: {directory}", "green")
+    
+    def on_format_change(self, new_format: str):
+        """Handle format preference change."""
+        self.config.set_preferred_output_format(new_format)
+        logging.info(f"Preferred output format changed to: {new_format}")
+    
+    def on_fps_change(self, value: float):
+        """Handle FPS slider change."""
+        fps = int(value)
+        self.config.set_fps_settings(fps)
+        self.fps_label.configure(text=f"FPS: {fps}")
 
     def detect_platform(self, url: str) -> str:
         """
@@ -207,7 +269,8 @@ class App(ctk.CTk):
             if convert_to_gif:
                 file_types = [("GIF files", "*.gif")]
                 default_ext = ".gif"
-                status_msg = f"Downloading and converting to GIF at {video_fps} FPS..."
+                fps_to_use = self.config.get_fps_settings()
+                status_msg = f"Downloading and converting to GIF at {fps_to_use} FPS..."
             else:
                 file_types = [("MP4 files", "*.mp4")]
                 default_ext = ".mp4"
@@ -215,13 +278,21 @@ class App(ctk.CTk):
 
             self.update_status(status_msg, "white")
 
+            # Get default save location from config
+            default_save_location = self.config.get_default_save_location()
+            initial_dir = default_save_location if default_save_location and os.path.exists(default_save_location) else None
+
             # Prompt for save location
-            output_file = filedialog.asksaveasfilename(
-                defaultextension=default_ext,
-                filetypes=file_types,
-                title=f"Save as {default_ext.upper()}",
-                initialfile=f"{default_name}{default_ext}"
-            )
+            save_kwargs = {
+                "defaultextension": default_ext,
+                "filetypes": file_types,
+                "title": f"Save as {default_ext.upper()}",
+                "initialfile": f"{default_name}{default_ext}"
+            }
+            if initial_dir:
+                save_kwargs["initialdir"] = initial_dir
+
+            output_file = filedialog.asksaveasfilename(**save_kwargs)
 
             if not output_file:
                 self.update_status("Download cancelled.", "gray")
@@ -233,7 +304,8 @@ class App(ctk.CTk):
 
             # Download the media
             if convert_to_gif:
-                success = downloader.download_media(url, output_file)
+                fps_to_use = self.config.get_fps_settings()
+                success = downloader.download_media(url, output_file, fps=fps_to_use)
             else:
                 # For video downloads, download directly to the chosen output file
                 success = downloader.download_media(url, output_file, skip_conversion=True)
