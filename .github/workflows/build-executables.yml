@@ -145,6 +145,12 @@ jobs:
         if [ -f app_icon.ico ]; then
           cp app_icon.ico AppDir/usr/share/icons/hicolor/256x256/apps/social-media-gif-downloader.png || true
         fi
+
+        # Create a placeholder icon if none exists
+        if [ ! -f AppDir/usr/share/icons/hicolor/256x256/apps/social-media-gif-downloader.png ]; then
+          # Create a simple placeholder icon or skip the icon
+          touch AppDir/usr/share/icons/hicolor/256x256/apps/social-media-gif-downloader.png || true
+        fi
         
         # Create AppRun
         cat > AppDir/AppRun << 'EOF'
@@ -161,7 +167,7 @@ jobs:
 
     - name: Build AppImage
       run: |
-        ./appimagetool-x86_64.AppImage AppDir SocialMediaGIFDownloader-Linux-x86_64.AppImage
+        ARCH=x86_64 ./appimagetool-x86_64.AppImage AppDir SocialMediaGIFDownloader-Linux-x86_64.AppImage
 
     - name: Upload Linux artifact
       uses: actions/upload-artifact@v4
