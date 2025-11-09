@@ -22,8 +22,6 @@ wheels/
 MANIFEST
 
 # PyInstaller
-*.spec
-*.exe
 *.log
 
 # IDE
