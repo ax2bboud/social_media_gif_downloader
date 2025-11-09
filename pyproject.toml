@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "social-media-gif-downloader"
-version = "1.0.4"
+version = "1.0.5"
 description = "A GUI to download videos/GIFs from social media."
 authors = [
     {name = "ax2bboud"},
@@ -49,4 +49,4 @@ dev = [
 
 [tool.setuptools]
 license-files = ["LICENSE"]
-py-modules = ["social_media_gif_downloader", "platforms"]
+py-modules = ["social_media_gif_downloader", "platforms", "config"]

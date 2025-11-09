@@ -11,6 +11,9 @@ block_cipher = None
 datas = []
 datas += collect_data_files('customtkinter')
 datas += collect_data_files('yt_dlp')
+datas += collect_data_files('imageio')
+datas += collect_data_files('pycryptodomex')
+
 
 # Collect binaries (including dynamic libraries)
 binaries = []
@@ -55,6 +58,7 @@ hiddenimports += [
     'proglog',
     'decorator',
     'imageio',
+    'imageio.plugins.pillow',
     'numpy',
     'certifi',
     'charset_normalizer',
@@ -63,6 +67,8 @@ hiddenimports += [
     'mutagen',
     'pycryptodomex',
     'urllib3',
+    'platforms',
+    'config',
 ]
 
 # Add platform-specific hidden imports
@@ -78,7 +84,7 @@ icon_file = 'app_icon.ico' if os.path.exists('app_icon.ico') else None
 
 a = Analysis(
     ['social_media_gif_downloader.py'],
-    pathex=[],
+    pathex=['.'],
     binaries=binaries,
     datas=datas,
     hiddenimports=hiddenimports,

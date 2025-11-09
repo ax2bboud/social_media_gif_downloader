@@ -12,7 +12,7 @@ This project uses the following third-party libraries:
 For full attributions and license texts, see ATTRIBUTIONS.md.
 """
 
-__version__ = "1.0.4"
+__version__ = "1.0.5"
 
 import sys
 import os
@@ -75,6 +75,26 @@ if getattr(sys, 'frozen', False):
 else:
     logging.info("Running in non-frozen mode")
 # --- END OF FIX ---
+
+
+# --- MONKEY-PATCH FOR IMAGEIO METADATA BUG ---
+# This is a workaround for a persistent PyInstaller issue where it fails to
+# bundle imageio's metadata, causing a `PackageNotFoundError` on startup.
+# We intercept the version call and return a valid version string to prevent the crash.
+try:
+    import importlib.metadata
+    _original_version = importlib.metadata.version
+
+    def _patched_version(package_name):
+        if package_name == 'imageio':
+            return '2.34.0'  # A recent, valid version to satisfy the check
+        return _original_version(package_name)
+
+    importlib.metadata.version = _patched_version
+    logging.info("Applied monkey-patch for imageio metadata.")
+except Exception as e:
+    logging.warning(f"Failed to apply imageio metadata patch: {e}")
+# --- END OF PATCH ---
 
 
 # Now, when moviepy is imported, it will use the path we just set
