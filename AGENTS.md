@@ -1,6 +1,11 @@
 # AGENTS.md
 
 ## Setup
+# Agent Development Guide
+
+## Commands
+
+### Initial Setup
 ```bash
 python -m venv .venv
 .venv\Scripts\activate  # Windows

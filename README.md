@@ -6,6 +6,10 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
 
 - **Multi-Platform Support**: Download from Twitter/X, Pinterest, and Instagram (videos only from Instagram)
 - **Simple GUI Interface**: Intuitive CustomTkinter-based interface for easy URL input and file saving.
+- **User Configuration Persistence**: Automatically saves and restores user settings including:
+  - Default save location
+  - Preferred output format (GIF or MP4)
+  - FPS settings for GIF conversion (1-60 FPS)
 - **Automatic FPS Detection**: Analyzes the source video to detect and apply the appropriate frame rate for GIF conversion.
 - **High-Quality Conversion**: Uses moviepy and FFmpeg to convert videos to GIFs with preserved quality.
 - **GIF Preservation**: Downloads Pinterest GIFs directly without re-encoding when possible.
@@ -15,6 +19,18 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
 - **Custom Save Locations**: Allows users to choose output filenames and directories via a save dialog.
 
 ## Installation
+
+### Option 1: Download Pre-built Executables (Recommended for End Users)
+
+Download the latest release for your platform from the [Releases](https://github.com/ax2bboud/social-media-gif-downloader/releases) page:
+
+- **Windows**: Download `SocialMediaGIFDownloader-Windows-x64.zip`, extract, and run the `.exe` file
+- **macOS**: Download `.dmg` or `.zip`, open/extract, and drag to Applications folder
+- **Linux**: Download `.AppImage`, make it executable (`chmod +x SocialMediaGIFDownloader-Linux-x86_64.AppImage`), and run
+
+No Python or FFmpeg installation required - all dependencies are bundled!
+
+### Option 2: Install from PyPI
 
 1.  **Install Python**: Ensure you have Python 3.8 or higher installed. You can download it from [python.org](https://www.python.org/).
 2.  **Install FFmpeg**: This is required for video processing.
@@ -30,21 +46,23 @@ A user-friendly GUI application for downloading videos and GIFs from Twitter/X, 
     social-media-gif-downloader
     ```
 
-That's it! The application should launch.
-
 ## Usage
 
 1. Launch the application.
-2. Paste a social media post URL into the input field:
+2. Configure your preferences (optional):
+   - Click "Set Default Save Location" to choose a default folder for downloads
+   - Select preferred output format from the dropdown (GIF or MP4)
+   - Adjust FPS slider for GIF conversion quality (1-60 FPS)
+3. Paste a social media post URL into the input field:
    - Twitter/X: `https://x.com/user/status/123456789`
    - Pinterest: `https://www.pinterest.com/pin/123456789/`
    - Instagram: `https://www.instagram.com/p/{post_id}/` or `https://www.instagram.com/reel/{reel_id}/`
-3. Click "Download as GIF".
-4. Choose a save location and filename for the GIF in the dialog that appears.
-5. The application will download the media, detect its FPS (for videos), and convert it to a GIF.
-6. Monitor progress via the status messages in the interface.
+4. Click "Download as GIF" or "Download as Video".
+5. Choose a save location and filename (defaults to your configured location).
+6. The application will download the media and convert it if necessary.
+7. Monitor progress via the status messages in the interface.
 
-**Note**: The tool automatically detects the platform from the URL. Pinterest GIFs are downloaded directly when available, while videos from all platforms are converted to GIF format. Instagram support is limited to videos only (posts and reels).
+**Note**: The tool automatically detects the platform from the URL. Pinterest GIFs are downloaded directly when available, while videos from all platforms are converted to GIF format. Instagram support is limited to videos only (posts and reels). Your preferences are automatically saved to `~/.social_media_gif_downloader.json` and will be restored the next time you launch the application.
 
 
 ## Entry Point
