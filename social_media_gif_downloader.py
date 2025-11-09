@@ -66,7 +66,7 @@ import customtkinter as ctk
 import tkinter.filedialog as filedialog
 import threading
 import subprocess
-from platforms import get_platform_downloader, TwitterDownloader, PinterestDownloader, InstagramDownloader
+from platforms import get_platform_downloader, TwitterDownloader, PinterestDownloader, InstagramDownloader, DownloadError, NetworkError
 
 
 # --- Constants ---
@@ -165,12 +165,22 @@ class App(ctk.CTk):
         """
         url = self.url_entry.get()
         if not url:
-            self.update_status("Error: Please paste a URL first.", "red")
+            self.update_status("Please paste a URL first.", "red")
             return
 
         downloader = get_platform_downloader(url, TEMP_VIDEO_FILE)
         if not downloader:
-            self.update_status("Error: Unsupported platform. Please use Twitter/X, Pinterest, or Instagram URLs.", "red")
+            self.update_status(
+                "Unsupported platform detected.\n\n"
+                "Troubleshooting:\n"
+                "• Only Twitter/X, Pinterest, and Instagram URLs are supported\n"
+                "• Make sure you copied the full URL from your browser\n"
+                "• Example URLs:\n"
+                "  - Twitter: https://x.com/user/status/123...\n"
+                "  - Pinterest: https://pinterest.com/pin/123...\n"
+                "  - Instagram: https://instagram.com/p/123... or /reel/123...",
+                "red"
+            )
             return
 
         # Disable buttons
@@ -247,11 +257,32 @@ class App(ctk.CTk):
                 else:
                     self.update_status(f"Success! Video saved as {os.path.basename(output_file)}", "green")
             else:
-                self.update_status("Error: Download failed. Check console.", "red")
+                self.update_status(
+                    "Download failed for an unknown reason.\n\n"
+                    "Troubleshooting:\n"
+                    "• Check the log file for more details\n"
+                    "• Try restarting the application\n"
+                    "• Verify the URL is correct",
+                    "red"
+                )
 
+        except NetworkError as e:
+            self.update_status(e.get_user_message(), "red")
+            logging.error(f"Network error: {e}")
+        except DownloadError as e:
+            self.update_status(e.get_user_message(), "red")
+            logging.error(f"Download error: {e}")
         except Exception as e:
-            self.update_status(f"Unexpected error: {e}", "red")
-            logging.error(f"Exception in download_media: {e}")
+            self.update_status(
+                f"An unexpected error occurred.\n\n"
+                f"Troubleshooting:\n"
+                f"• Check your internet connection\n"
+                f"• Try restarting the application\n"
+                f"• Make sure you have enough disk space\n"
+                f"• Error: {str(e)[:100]}",
+                "red"
+            )
+            logging.error(f"Unexpected exception in download_media: {e}", exc_info=True)
         finally:
             # Cleanup
             downloader.cleanup()

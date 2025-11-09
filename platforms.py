@@ -9,16 +9,39 @@ import json
 import logging
 import platform
 import subprocess
+import time
 from abc import ABC, abstractmethod
 from typing import Optional, Tuple, Any
+
+
+class DownloadError(Exception):
+    """Base exception for download errors with user-friendly messages."""
+    
+    def __init__(self, message: str, troubleshooting: str = ""):
+        self.message = message
+        self.troubleshooting = troubleshooting
+        super().__init__(self.message)
+    
+    def get_user_message(self) -> str:
+        """Get formatted message for display to user."""
+        if self.troubleshooting:
+            return f"{self.message}\n\nTroubleshooting:\n{self.troubleshooting}"
+        return self.message
+
+
+class NetworkError(DownloadError):
+    """Network-related errors."""
+    pass
 
 
 class PlatformDownloader(ABC):
     """Abstract base class for platform-specific downloaders."""
 
-    def __init__(self, temp_file: str = "temp_video.mp4"):
+    def __init__(self, temp_file: str = "temp_video.mp4", max_retries: int = 3, timeout: int = 60):
         self.temp_file = temp_file
         self.yt_dlp_executable = 'yt-dlp.exe' if platform.system() == "Windows" else 'yt-dlp'
+        self.max_retries = max_retries
+        self.timeout = timeout
 
     @abstractmethod
     def detect_platform(self, url: str) -> bool:
@@ -35,10 +58,136 @@ class PlatformDownloader(ABC):
         """Extract post/pin ID from URL for filename generation."""
         pass
 
+    def _run_with_retry(self, command: list, operation: str) -> subprocess.CompletedProcess:
+        """
+        Run a subprocess command with automatic retry on failure.
+        
+        Args:
+            command: Command list to execute
+            operation: Human-readable operation name for error messages
+            
+        Returns:
+            CompletedProcess result
+            
+        Raises:
+            NetworkError: On network-related failures
+            DownloadError: On other failures
+        """
+        last_error = None
+        
+        for attempt in range(1, self.max_retries + 1):
+            try:
+                logging.info(f"Attempt {attempt}/{self.max_retries} for {operation}")
+                
+                result = subprocess.run(
+                    command,
+                    capture_output=True,
+                    text=True,
+                    encoding='utf-8',
+                    timeout=self.timeout,
+                    creationflags=(subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
+                )
+                
+                if result.returncode == 0:
+                    logging.info(f"{operation} succeeded on attempt {attempt}")
+                    return result
+                
+                # Check for network-related errors in stderr
+                stderr_lower = result.stderr.lower()
+                is_network_error = any(keyword in stderr_lower for keyword in [
+                    'network', 'timeout', 'connection', 'timed out', 'unreachable',
+                    'dns', 'unable to download', 'http error 5', 'errno'
+                ])
+                
+                last_error = result.stderr
+                
+                if is_network_error and attempt < self.max_retries:
+                    wait_time = 2 ** attempt  # Exponential backoff: 2, 4, 8 seconds
+                    logging.warning(f"Network error on attempt {attempt}, retrying in {wait_time}s: {result.stderr[:200]}")
+                    time.sleep(wait_time)
+                    continue
+                
+                # Non-retryable error or last attempt
+                break
+                
+            except subprocess.TimeoutExpired:
+                logging.warning(f"Timeout on attempt {attempt}/{self.max_retries} for {operation}")
+                last_error = f"Operation timed out after {self.timeout} seconds"
+                
+                if attempt < self.max_retries:
+                    wait_time = 2 ** attempt
+                    logging.info(f"Retrying in {wait_time}s...")
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # Last attempt, break to raise error
+                    break
+                    
+            except Exception as e:
+                logging.error(f"Unexpected error on attempt {attempt}: {e}")
+                last_error = str(e)
+                
+                if attempt < self.max_retries:
+                    wait_time = 2 ** attempt
+                    time.sleep(wait_time)
+                    continue
+                else:
+                    # Last attempt, break to raise error
+                    break
+                    
+        # All retries exhausted
+        if last_error and 'timed out' in str(last_error).lower():
+            raise NetworkError(
+                "Connection timed out - the download took too long to complete.",
+                "• Check your internet connection\n"
+                "• Try again in a few moments\n"
+                "• The video might be too large or the server might be slow"
+            )
+        elif last_error and any(keyword in str(last_error).lower() for keyword in ['network', 'connection', 'unreachable', 'dns']):
+            raise NetworkError(
+                "Network connection error - couldn't reach the server.",
+                "• Check your internet connection\n"
+                "• Verify the URL is correct and the post is still available\n"
+                "• Try disabling VPN/proxy if enabled\n"
+                "• Your firewall might be blocking the connection"
+            )
+        elif last_error and ('private' in str(last_error).lower() or 'not available' in str(last_error).lower()):
+            raise DownloadError(
+                "Content not accessible - the post might be private or deleted.",
+                "• Verify the post URL is correct\n"
+                "• Check if the post is public (not private or deleted)\n"
+                "• For private accounts, the content cannot be downloaded"
+            )
+        elif last_error and 'http error 404' in str(last_error).lower():
+            raise DownloadError(
+                "Content not found - the post doesn't exist or has been deleted.",
+                "• Double-check the URL\n"
+                "• The post may have been deleted by the author\n"
+                "• Try copying the URL again from your browser"
+            )
+        elif last_error and ('format' in str(last_error).lower() or 'no video' in str(last_error).lower()):
+            raise DownloadError(
+                "No video found - this post doesn't contain downloadable video content.",
+                "• Make sure the post contains a video (not just images)\n"
+                "• Some content types (like Instagram stories) are not supported\n"
+                "• Try a different post URL"
+            )
+        else:
+            raise DownloadError(
+                f"Download failed after {self.max_retries} attempts.",
+                "• Check your internet connection\n"
+                "• Verify the URL is correct\n"
+                "• Try again in a few moments\n"
+                f"• Error details: {last_error[:150]}"
+            )
+
     def get_video_info(self, url: str) -> Tuple[int, str]:
         """
         Get video FPS and default filename using yt-dlp.
         Returns: (fps, default_filename)
+        
+        Raises:
+            DownloadError: If unable to fetch video info
         """
         yt_dlp_command_info = [
             self.yt_dlp_executable,
@@ -48,29 +197,38 @@ class PlatformDownloader(ABC):
             url
         ]
 
-        result_info = subprocess.run(
-            yt_dlp_command_info,
-            capture_output=True,
-            text=True,
-            encoding='utf-8',
-            creationflags=(subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
-        )
+        try:
+            result_info = self._run_with_retry(yt_dlp_command_info, "fetch video info")
+            
+            video_fps = 15  # Default FPS
+            if result_info.stdout:
+                try:
+                    video_info = json.loads(result_info.stdout)
+                    video_fps = video_info.get('fps', 15)
+                except json.JSONDecodeError:
+                    logging.warning("Could not parse video info JSON, using default FPS")
 
-        video_fps = 15  # Default FPS
-        if result_info.returncode == 0 and result_info.stdout:
-            try:
-                video_info = json.loads(result_info.stdout)
-                video_fps = video_info.get('fps', 15)
-            except json.JSONDecodeError:
-                pass  # Use default FPS
-
-        default_name = self.get_id_from_url(url)
-        return video_fps, default_name
+            default_name = self.get_id_from_url(url)
+            return video_fps, default_name
+            
+        except (NetworkError, DownloadError):
+            raise
+        except Exception as e:
+            logging.error(f"Error getting video info: {e}")
+            raise DownloadError(
+                "Failed to retrieve video information.",
+                "• Check if the URL is valid\n"
+                "• Make sure the post is public and contains a video\n"
+                f"• Error: {str(e)[:100]}"
+            )
 
     def download_media(self, url: str, output_file: str, progress_callback=None, skip_conversion=False) -> bool:
         """
         Download media from the platform.
         Returns True if successful, False otherwise.
+        
+        Raises:
+            DownloadError: On download failures with user-friendly messages
         """
         try:
             # For video downloads, download directly to output file
@@ -95,20 +253,16 @@ class PlatformDownloader(ABC):
                 yt_dlp_command_dl.insert(1, '-f')
                 yt_dlp_command_dl.insert(2, formats)
 
-            result_dl = subprocess.run(
-                yt_dlp_command_dl,
-                capture_output=True,
-                text=True,
-                creationflags=(subprocess.CREATE_NO_WINDOW if platform.system() == "Windows" else 0)
-            )
-
-            if result_dl.returncode != 0:
-                logging.error(f"yt-dlp Error: {result_dl.stderr}")
-                return False
+            # Download with retry mechanism
+            self._run_with_retry(yt_dlp_command_dl, "download media")
 
             if not os.path.exists(download_target):
-                logging.error("Downloaded file not found")
-                return False
+                raise DownloadError(
+                    "Download completed but file not found.",
+                    "• Try downloading again\n"
+                    "• Check if you have write permissions to the output folder\n"
+                    "• Your antivirus might be blocking the file"
+                )
 
             # If we downloaded directly to output (video download), we're done
             if skip_conversion:
@@ -124,12 +278,25 @@ class PlatformDownloader(ABC):
             # Convert video to GIF
             return self.convert_to_gif(self.temp_file, output_file, progress_callback)
 
+        except (NetworkError, DownloadError):
+            raise
         except Exception as e:
             logging.error(f"Download error: {e}")
-            return False
+            raise DownloadError(
+                f"An unexpected error occurred during download.",
+                "• Check your internet connection\n"
+                "• Make sure you have enough disk space\n"
+                "• Try restarting the application\n"
+                f"• Error: {str(e)[:100]}"
+            )
 
     def convert_to_gif(self, input_file: str, output_file: str, progress_callback=None) -> bool:
-        """Convert video file to GIF format."""
+        """
+        Convert video file to GIF format.
+        
+        Raises:
+            DownloadError: If conversion fails
+        """
         try:
             from moviepy.video.io.VideoFileClip import VideoFileClip
 
@@ -164,7 +331,13 @@ class PlatformDownloader(ABC):
 
         except Exception as e:
             logging.error(f"GIF conversion error: {e}")
-            return False
+            raise DownloadError(
+                "Failed to convert video to GIF format.",
+                "• The video file might be corrupted\n"
+                "• Try downloading as video (MP4) instead\n"
+                "• Make sure you have enough disk space\n"
+                "• FFmpeg might not be installed correctly"
+            )
         finally:
             # Ensure clip is closed
             try:
