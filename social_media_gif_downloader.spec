@@ -1,13 +1,18 @@
 # -*- mode: python ; coding: utf-8 -*-
 
 import sys
+# Add the project root to the Python path to allow hooks to be imported
+sys.path.append(os.path.abspath("."))
+
 import os
 import platform
 from PyInstaller.utils.hooks import collect_data_files, collect_submodules, collect_dynamic_libs
+from hooks.helpers import find_binary
 
 block_cipher = None
 
-# Collect all necessary data files and hidden imports
+# --- Collect Data Files ---
+# Bundles non-code assets required by the application at runtime.
 datas = []
 datas += collect_data_files('customtkinter')
 datas += collect_data_files('yt_dlp')
@@ -15,38 +20,27 @@ datas += collect_data_files('imageio')
 datas += collect_data_files('pycryptodomex')
 
 
-# Collect binaries (including dynamic libraries)
+# --- Collect Binaries ---
+# Bundles external executables and dynamic libraries.
 binaries = []
 binaries += collect_dynamic_libs('customtkinter')
 
-# Add ffmpeg binary if available
-ffmpeg_binary = None
-if os.path.exists('ffmpeg.exe') or os.path.exists('ffmpeg'):
-    ffmpeg_name = 'ffmpeg.exe' if platform.system() == 'Windows' else 'ffmpeg'
-    if os.path.exists(ffmpeg_name):
-        binaries.append((ffmpeg_name, '.'))
-        print(f"[INFO] Found and bundling ffmpeg: {ffmpeg_name}")
+# Add ffmpeg, ffprobe, and yt-dlp binaries using the helper
+# This ensures they are found regardless of their location (root, bin, or PATH).
+for binary_name in ['ffmpeg', 'ffprobe', 'yt-dlp']:
+    # Add '.exe' for Windows
+    if platform.system() == 'Windows':
+        binary_name += '.exe'
+    
+    # Find the binary path using the helper
+    binary_path = find_binary(binary_name)
+    
+    # If found, add it to the binaries list to be bundled
+    if binary_path:
+        binaries.append((binary_path, '.'))
+        print(f"[INFO] Bundling '{binary_name}' from: {binary_path}")
     else:
-        print(f"[WARNING] ffmpeg binary not found at {ffmpeg_name}")
-else:
-    # Try to find ffmpeg from imageio-ffmpeg package (bundled with moviepy)
-    try:
-        import imageio_ffmpeg
-        ffmpeg_path = imageio_ffmpeg.get_ffmpeg_exe()
-        if ffmpeg_path and os.path.exists(ffmpeg_path):
-            ffmpeg_name = 'ffmpeg.exe' if platform.system() == 'Windows' else 'ffmpeg'
-            binaries.append((ffmpeg_path, '.'))
-            print(f"[INFO] Found and bundling ffmpeg from imageio-ffmpeg: {ffmpeg_path}")
-        else:
-            print("[WARNING] imageio-ffmpeg ffmpeg not found")
-    except ImportError:
-        print("[WARNING] imageio-ffmpeg not installed, ffmpeg may not be bundled")
-
-# Add yt-dlp binary if available (for platforms where yt-dlp is bundled as binary)
-yt_dlp_name = 'yt-dlp.exe' if platform.system() == 'Windows' else 'yt-dlp'
-if os.path.exists(yt_dlp_name):
-    binaries.append((yt_dlp_name, '.'))
-    print(f"[INFO] Found and bundling yt-dlp binary: {yt_dlp_name}")
+        print(f"[WARNING] Could not find '{binary_name}'. It will not be bundled.")
 
 hiddenimports = []
 hiddenimports += collect_submodules('customtkinter')
@@ -65,7 +59,7 @@ hiddenimports += [
     'websockets',
     'brotli',
     'mutagen',
-    'pycryptodomex',
+    'Cryptodome',
     'urllib3',
     'platforms',
     'config',

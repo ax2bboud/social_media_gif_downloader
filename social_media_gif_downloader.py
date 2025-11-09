@@ -39,42 +39,39 @@ else:
         format='%(asctime)s - %(levelname)s - %(message)s'
     )
 
-# --- PYINSTALLER FFMPEG FIX ---
-# This block must be at the VERY TOP, before moviepy is imported.
-# It tells the script where to find ffmpeg when it's bundled.
-if getattr(sys, 'frozen', False):
-    if hasattr(sys, '_MEIPASS'):
-        # This is the temporary path PyInstaller creates
-        base_path = sys._MEIPASS
+# --- PYINSTALLER RESOURCE PATH HANDLING ---
+# This block ensures that bundled resources like ffmpeg are correctly located
+# whether the app is running from source or as a frozen executable.
+def get_resource_path(relative_path: str) -> str:
+    """
+    Get the absolute path to a resource, that works in development and with PyInstaller.
+    """
+    if getattr(sys, 'frozen', False):
+        # The `_MEIPASS` attribute is set by PyInstaller to a temporary folder
+        base_path = getattr(sys, '_MEIPASS')
     else:
-        # Fallback for some environments
-        base_path = os.path.dirname(sys.executable)
+        # In development, the path is relative to the script's directory
+        base_path = os.path.abspath(".")
 
-    # Set the environment variable for moviepy and imageio
-    ffmpeg_binary = "ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg"
-    ffmpeg_path = os.path.join(base_path, ffmpeg_binary)
+    return os.path.join(base_path, relative_path)
+
+try:
+    # Set the environment variable that moviepy and other libraries use to find ffmpeg.
+    # This must be done *before* importing moviepy.
+    FFMPEG_BINARY_NAME = "ffmpeg.exe" if platform.system() == "Windows" else "ffmpeg"
+    FFMPEG_PATH = get_resource_path(FFMPEG_BINARY_NAME)
     
-    # Check if ffmpeg exists in the bundle
-    if os.path.exists(ffmpeg_path):
-        os.environ["FFMPEG_BINARY"] = ffmpeg_path
-        os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_path
-        logging.info(f"Frozen mode: FFMPEG_BINARY set to {ffmpeg_path}")
+    if os.path.exists(FFMPEG_PATH):
+        os.environ["IMAGEIO_FFMPEG_EXE"] = FFMPEG_PATH
+        logging.info(f"FFmpeg path set to: {FFMPEG_PATH}")
     else:
-        # Try to use imageio-ffmpeg as fallback
-        try:
-            import imageio_ffmpeg
-            ffmpeg_fallback = imageio_ffmpeg.get_ffmpeg_exe()
-            if ffmpeg_fallback and os.path.exists(ffmpeg_fallback):
-                os.environ["FFMPEG_BINARY"] = ffmpeg_fallback
-                os.environ["IMAGEIO_FFMPEG_EXE"] = ffmpeg_fallback
-                logging.info(f"Frozen mode: Using imageio-ffmpeg at {ffmpeg_fallback}")
-            else:
-                logging.warning("FFmpeg not found in bundle or imageio-ffmpeg")
-        except ImportError:
-            logging.warning("FFmpeg not found in bundle and imageio-ffmpeg not available")
-else:
-    logging.info("Running in non-frozen mode")
-# --- END OF FIX ---
+        logging.warning(
+            f"FFmpeg binary ('{FFMPEG_BINARY_NAME}') not found at expected path: {FFMPEG_PATH}. "
+            "Video conversion will likely fail."
+        )
+except Exception as e:
+    logging.error(f"An unexpected error occurred while setting the FFmpeg path: {e}", exc_info=True)
+# --- END OF RESOURCE HANDLING ---
 
 
 # --- MONKEY-PATCH FOR IMAGEIO METADATA BUG ---
